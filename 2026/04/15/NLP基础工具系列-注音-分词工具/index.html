@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"gongqihua.github.io","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="NLP基础工具简介企业级nlp工具制作时候的心得分享，本篇更新：注音器 和 分词工具 项目依赖并非普通民用所能接触，只能大致解释原理，多的不便多说。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="NLP基础工具系列-注音&amp;分词工具">
+<meta property="og:url" content="https://gongqihua.github.io/2026/04/15/NLP%E5%9F%BA%E7%A1%80%E5%B7%A5%E5%85%B7%E7%B3%BB%E5%88%97-%E6%B3%A8%E9%9F%B3-%E5%88%86%E8%AF%8D%E5%B7%A5%E5%85%B7/index.html">
+<meta property="og:site_name" content="Qihua&#39;s Blog">
+<meta property="og:description" content="NLP基础工具简介企业级nlp工具制作时候的心得分享，本篇更新：注音器 和 分词工具 项目依赖并非普通民用所能接触，只能大致解释原理，多的不便多说。">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2026-04-15T08:34:21.000Z">
+<meta property="article:modified_time" content="2026-04-15T08:46:02.654Z">
+<meta property="article:author" content="Qihua Gong">
+<meta property="article:tag" content="NLP">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://gongqihua.github.io/2026/04/15/NLP%E5%9F%BA%E7%A1%80%E5%B7%A5%E5%85%B7%E7%B3%BB%E5%88%97-%E6%B3%A8%E9%9F%B3-%E5%88%86%E8%AF%8D%E5%B7%A5%E5%85%B7/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>NLP基础工具系列-注音&分词工具 | Qihua's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Qihua's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">Personal Blog</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-resume">
+
+    <a href="/file/CV_Qihua%20Gong_EN.pdf" rel="section"><i class="fa fa-file fa-fw"></i>Resume</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://gongqihua.github.io/2026/04/15/NLP%E5%9F%BA%E7%A1%80%E5%B7%A5%E5%85%B7%E7%B3%BB%E5%88%97-%E6%B3%A8%E9%9F%B3-%E5%88%86%E8%AF%8D%E5%B7%A5%E5%85%B7/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://s2.loli.net/2024/02/27/t6ipmhvbDjX7zn5.jpg">
+      <meta itemprop="name" content="Qihua Gong">
+      <meta itemprop="description" content="Qihua Personal Blog">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Qihua's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          NLP基础工具系列-注音&分词工具
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2026-04-15 16:34:21 / Modified: 16:46:02" itemprop="dateCreated datePublished" datetime="2026-04-15T16:34:21+08:00">2026-04-15</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Basice-tool/" itemprop="url" rel="index"><span itemprop="name">Basice_tool</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="NLP基础工具"><a href="#NLP基础工具" class="headerlink" title="NLP基础工具"></a>NLP基础工具</h1><h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>企业级nlp工具制作时候的心得分享，本篇更新：注音器 和 分词工具</p>
+<p>项目依赖并非普通民用所能接触，只能大致解释原理，多的不便多说。<span id="more"></span></p>
+<h2 id="注音器"><a href="#注音器" class="headerlink" title="注音器"></a>注音器</h2><h3 id="开门见山"><a href="#开门见山" class="headerlink" title="开门见山"></a>开门见山</h3><p>python的注音器，可以理解为 <a target="_blank" rel="noopener" href="https://github.com/mozillazg/python-pinyin">pypinyin</a> 的进化版，如果你有企业级的词库作为支撑，这个注音器是个不二之选。</p>
+<h3 id="调用方法"><a href="#调用方法" class="headerlink" title="调用方法"></a>调用方法</h3><blockquote>
+<p>from zhuyin_tool import zhuyin</p>
+<p>result &#x3D; zhuyin(text, best_match&#x3D;0, use_tokenizer&#x3D;0)</p>
+</blockquote>
+<p>text: 要注音的str</p>
+<p>best_match: 因为有多音，有多种可能输出，&#x3D;0全出，&#x3D;1只出top prob首选</p>
+<p>use_tokenizer：是否开启分词器，0不开，1开启</p>
+<p>注：就算不开分词器，注音器也内置了最大前向匹配的基础分词</p>
+<h3 id="背景介绍"><a href="#背景介绍" class="headerlink" title="背景介绍"></a>背景介绍</h3><p>在工业化的使用场景下，你会发现pypinyin是不够用的，分两个方面</p>
+<ol>
+<li>准确率问题：包括了pypinyin对多音字词的支持，评测下来准确率是90%左右浮动，差的那10%就等着源源不断的问题吧</li>
+<li>业务场景支撑不行：pypinyin只能首选和全出，没有统计的支撑，举些例子：出血(xue&#x2F;xie)，谁(shei&#x2F;shui)是。这些词的多音是都对的，但此时如果你的注音器只能出一个结果，就很尴尬了，比如你在聊天场景，你的注音库是 出血（chuxie）用户输入 chuxue 你是可以不出词吗？显然你会被人骂死。</li>
+</ol>
+<p>正确的做法是，你应该基于数据统计来做注音，这能在提升注音准确率的同时，顺带给你一个分流的逻辑，比如 chuxie 50% &#x2F; chuxue 50%，这会对你在做带拼音词库，百科，词表等相关业务的时候有重要的帮助，所以在此手搓了这个注音器。</p>
+<h3 id="原理简介"><a href="#原理简介" class="headerlink" title="原理简介"></a>原理简介</h3><p>注音器的逻辑很简单，你要先有两个带拼音和统计的字典，然后最大前向匹配查字典就完了，如果有多段，记下概率后算笛卡尔积。如果要开分词器，开在最大前向匹配前。</p>
+<p><strong>关键在一手做字典的功力</strong></p>
+<p>首先你要有企业级的统计资源，比如你在：某聊天软件，某短视频字幕，某输入法，某搜索团队工作，这样你的统计回流做成的字典才能和pypinyin拉开大差距，我做下来，不同测试集正确率在97%-99%，pypinyin90%正确率。普通用户请出门左转pypinyin，已经很优秀了。</p>
+<p>然后就是根据hive回流统计去做字典，这项目里的字典只是做个演示，从 <a target="_blank" rel="noopener" href="https://github.com/iDvel/rime-ice">雾凇拼音</a> 偷了一个大致像样主字典做的，做字典程序在 build_zhuyin_dict里，给你个sample，不要真用了，这并非我在用的字典。正常做法你要从云侧去统计，spark计算。至于计算过程，你看一下 single_zhuyin_dict.json 和 multi_zhuyin_dict.json 的格式应该就明白了。</p>
+<h3 id="问题解释"><a href="#问题解释" class="headerlink" title="问题解释"></a>问题解释</h3><p>有兄弟问了个很好的问题，比如 重 这个字，分布是：zhong 0.9，chong 0.1，那么我遇到 重大校区，即重庆大学校区的缩写，按笛卡尔积算不是照样首选zhongda吗？</p>
+<p>答案很简单，就是你的多字词库里要有，重大校区 这种搭配，或者你要去搞二元字典，重大-校区，重大-学生，我是觉得直接收录一元和扩展搜索二元字典区别不大</p>
+<p>主要还是你要有标注的字典资源。自己手标是不现实的，别想了，要有用户”自愿“的为你标注的业务场景，比如你在微信，你能统计到用户打chongdaxiaoqu，对话发送了 重大校区，然后你给这两个打点统计对起来，这种顶级的标注资源。相关业务云侧的统计数据，每日是TB级的，所以可想而知类似工具背后依赖的迭代字典对比开源的这些注音项目是力大砖飞的。</p>
+<p>否则，没有资源的，请出门左转pypinyin熬。</p>
+<h2 id="分词器"><a href="#分词器" class="headerlink" title="分词器"></a>分词器</h2><h3 id="调用方法-1"><a href="#调用方法-1" class="headerlink" title="调用方法"></a>调用方法</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> tokenizer <span class="keyword">import</span> Tokenizer</span><br><span class="line"></span><br><span class="line">tokenizer = Tokenizer()</span><br><span class="line">    </span><br><span class="line">unigram_csv_path = <span class="string">&quot;sys_unigram.csv&quot;</span></span><br><span class="line">bigram_csv_path = <span class="string">&quot;sys_bigram.csv&quot;</span></span><br><span class="line"></span><br><span class="line">tokenizer.init(unigram_csv_path, bigram_csv_path)</span><br><span class="line">result = tokenizer.segment(text)</span><br></pre></td></tr></table></figure>
+
+<h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p>也是一个基于统计语言模型的中文分词器</p>
+<p>核心做法是利用一元模型(Unigram)和二元模型(Bigram)，通过动态规划寻找最优分词路径。</p>
+<p>为什么用这个手搓的，说是主要改了算法公式和0.5那个配比参数，公式是融合了jieba的，最后评测下来提升也是高10%。但在我看来评价有夸大成分，主要还是背后的词库好，所以能有这个提升。我的建议是用jieba，把词库换了就完事了。该程序是我现在在用的分词器，python版本的仿写，加入了一些个人的理解。</p>
+<h3 id="原理简述"><a href="#原理简述" class="headerlink" title="原理简述"></a>原理简述</h3><p>词典加载：从CSV文件加载词语的对数概率，构建Unigram和Bigram概率表</p>
+<p>文本预处理：用正则表达式分离英文、数字和空白字符</p>
+<p>Trie树索引：将词典组织成前缀树，实现O(n)时间内的词语快速查找</p>
+<p>DAG构建：为输入句子构建有向无环图，节点表示字位置，边表示可能的词语</p>
+<p>动态规划：使用维特比算法求解最优路径，通过线性插值平滑平衡一元和二元概率</p>
+<p>路径回溯：根据DP结果回溯得到最终的分词序列</p>
+<p>该方法结合了词典匹配和概率图模型的优点，能够处理未登录词并考虑上下文信息。</p>
+<p>最终的关键还是一手做词库的数据功底</p>
+<h3 id="词库制作"><a href="#词库制作" class="headerlink" title="词库制作"></a>词库制作</h3><p>分词器依靠的是一个带分数的一元二元词库，一元类似：明天，二元类似：明天-见</p>
+<p>你要根据统计数据去计算分数</p>
+<p>一元分数是先从一元回流去筛选和抽一部分词库词（这个就靠你自己去想怎么做了），抽完以后，算全局概率分布，然后-logE。有条件的话你可以映射0-225。</p>
+<p>二元分数是，在一元词库的基础上，去二元回流统计里，捞前元是一元的那些，记得按频率筛选一下。然后计算前后元的条件概率，再-logE</p>
+<p>由于我没找到有那种开源的二元统计，这里就空着了，只传了分词器的实现部分，仅供参考。</p>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>数据积累是一切算法实现的前提。</p>
+<p>其实这个世界从来没有什么弯道超车，有的只是厚积薄发。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/NLP/" rel="tag"># NLP</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2024/07/20/XLua%E7%83%AD%E6%9B%B4%E6%96%B0/" rel="prev" title="XLua热更新">
+      <i class="fa fa-chevron-left"></i> XLua热更新
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#NLP%E5%9F%BA%E7%A1%80%E5%B7%A5%E5%85%B7"><span class="nav-number">1.</span> <span class="nav-text">NLP基础工具</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">1.1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B3%A8%E9%9F%B3%E5%99%A8"><span class="nav-number">1.2.</span> <span class="nav-text">注音器</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BC%80%E9%97%A8%E8%A7%81%E5%B1%B1"><span class="nav-number">1.2.1.</span> <span class="nav-text">开门见山</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B0%83%E7%94%A8%E6%96%B9%E6%B3%95"><span class="nav-number">1.2.2.</span> <span class="nav-text">调用方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%83%8C%E6%99%AF%E4%BB%8B%E7%BB%8D"><span class="nav-number">1.2.3.</span> <span class="nav-text">背景介绍</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8E%9F%E7%90%86%E7%AE%80%E4%BB%8B"><span class="nav-number">1.2.4.</span> <span class="nav-text">原理简介</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%97%AE%E9%A2%98%E8%A7%A3%E9%87%8A"><span class="nav-number">1.2.5.</span> <span class="nav-text">问题解释</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%86%E8%AF%8D%E5%99%A8"><span class="nav-number">1.3.</span> <span class="nav-text">分词器</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B0%83%E7%94%A8%E6%96%B9%E6%B3%95-1"><span class="nav-number">1.3.1.</span> <span class="nav-text">调用方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%83%8C%E6%99%AF"><span class="nav-number">1.3.2.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8E%9F%E7%90%86%E7%AE%80%E8%BF%B0"><span class="nav-number">1.3.3.</span> <span class="nav-text">原理简述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%8D%E5%BA%93%E5%88%B6%E4%BD%9C"><span class="nav-number">1.3.4.</span> <span class="nav-text">词库制作</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E8%AF%AD"><span class="nav-number">1.4.</span> <span class="nav-text">结语</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Qihua Gong"
+      src="https://s2.loli.net/2024/02/27/t6ipmhvbDjX7zn5.jpg">
+  <p class="site-author-name" itemprop="name">Qihua Gong</p>
+  <div class="site-description" itemprop="description">Qihua Personal Blog</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">15</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/gongqihua" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;gongqihua" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:gongqihua0115@gmail.com" title="E-Mail → mailto:gongqihua0115@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.linkedin.com/in/gongqihua0115/" title="Linkedin → https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;gongqihua0115&#x2F;" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i>Linkedin</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://steamcommunity.com/profiles/76561198189728994/" title="Steam → https:&#x2F;&#x2F;steamcommunity.com&#x2F;profiles&#x2F;76561198189728994&#x2F;" rel="noopener" target="_blank"><i class="fab fa-steam fa-fw"></i>Steam</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="/file/CV_QihuaGong_CN.pdf" title="&#x2F;file&#x2F;CV_QihuaGong_CN.pdf">中文简历</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="/file/CV_Game_CN.pdf" title="&#x2F;file&#x2F;CV_Game_CN.pdf">中文简历_游戏</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2024 – 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Qihua Gong</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

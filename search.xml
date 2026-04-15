@@ -20,6 +20,81 @@
       </tags>
   </entry>
   <entry>
+    <title>Unity AssetBundle实战</title>
+    <url>/2024/06/03/AssetBundle%E5%AE%9E%E6%88%98/</url>
+    <content><![CDATA[<h1 id="AssetBundle实战（AB打包）"><a href="#AssetBundle实战（AB打包）" class="headerlink" title="AssetBundle实战（AB打包）"></a>AssetBundle实战（AB打包）</h1><h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>AssetBundle打包实战项目，主要是AssetBundle怎么打包的，怎么加载以及卸载的过场和原理，随便倒了个资源包进来，进行实操。</p>
+<p>还有对相关理论问题的一些总结<span id="more"></span></p>
+<p>项目地址: <a href="https://github.com/GongQihua/AssetBundlePractise">传送门</a>, 演示视频在DEMO文件夹下。</p>
+<h2 id="编译器打包工具开发"><a href="#编译器打包工具开发" class="headerlink" title="编译器打包工具开发"></a>编译器打包工具开发</h2><blockquote>
+<p>打出的ab资源在工程同级的AssetBundle下</p>
+<p>可以无缝切换编辑器和AB加载方式</p>
+<p>注意AB模式下，改完资源记得Tools&#x2F;ResBuild一下</p>
+<p>支持同步异步等方式</p>
+<p>具体的打包配置在BuildSetting.xml里配置即可，具体精细到文件还是文件夹都可以。</p>
+</blockquote>
+<p>主要工程代码在AssetBundleFramework下，core和editor</p>
+<p>现在菜单里创建打包工具，方便使用，大概方法：</p>
+<figure class="highlight c#"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">region</span> Build MenuItem</span></span><br><span class="line"></span><br><span class="line">        [<span class="meta">MenuItem(<span class="string">&quot;Tools/ResBuild/Windows&quot;</span>)</span>]</span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">BuildWindows</span>()</span></span><br><span class="line">        &#123;</span><br><span class="line">            Build();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        [<span class="meta">MenuItem(<span class="string">&quot;Tools/ResBuild/Android&quot;</span>)</span>]</span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">BuildAndroid</span>()</span></span><br><span class="line">        &#123;</span><br><span class="line">            Build();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        [<span class="meta">MenuItem(<span class="string">&quot;Tools/ResBuild/iOS&quot;</span>)</span>]</span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">BuildIos</span>()</span></span><br><span class="line">        &#123;</span><br><span class="line">            Build();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">endregion</span></span></span><br></pre></td></tr></table></figure>
+
+<p>后面相似的创建就不复述了</p>
+<p>core里创建一个文件，Profiler，作为按键等操作的log输出。项目需要的是规范的log输出，记录干了什么，抛出错误，记录时间等等。代码自查吧，算是一个前置工作</p>
+<p>再就是打包的基本配置，不同平台需要不同的配置，配置是xml文件，切换配置的函数：</p>
+<figure class="highlight c#"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">SwitchPlatform</span>()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">string</span> platform = PLATFORM;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">switch</span> (platform)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&quot;windows&quot;</span>:</span><br><span class="line">            EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Standalone, BuildTarget.StandaloneWindows64);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&quot;android&quot;</span>:</span><br><span class="line">            EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Android, BuildTarget.Android);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&quot;ios&quot;</span>:</span><br><span class="line">            EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.iOS, BuildTarget.iOS);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> BuildSetting <span class="title">LoadSetting</span>(<span class="params"><span class="built_in">string</span> settingPath</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    buildSetting = XmlUtility.Read&lt;BuildSetting&gt;(settingPath);</span><br><span class="line">    <span class="keyword">if</span> (buildSetting == <span class="literal">null</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> Exception(<span class="string">$&quot;Load buildSetting failed,SettingPath:<span class="subst">&#123;settingPath&#125;</span>.&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    (buildSetting <span class="keyword">as</span> ISupportInitialize)?.EndInit();</span><br><span class="line"></span><br><span class="line">    buildPath = Path.GetFullPath(buildSetting.buildRoot).Replace(<span class="string">&quot;\\&quot;</span>, <span class="string">&quot;/&quot;</span>);</span><br><span class="line">    <span class="keyword">if</span> (buildPath.Length &gt; <span class="number">0</span> &amp;&amp; buildPath[buildPath.Length - <span class="number">1</span>] != <span class="string">&#x27;/&#x27;</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        buildPath += <span class="string">&quot;/&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    buildPath += <span class="string">$&quot;<span class="subst">&#123;PLATFORM&#125;</span>/&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> buildSetting;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>启动切换：</p>
+<figure class="highlight c#"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">if</span> UNITY_IOS</span></span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">const</span> <span class="built_in">string</span> PLATFORM = <span class="string">&quot;iOS&quot;</span>;</span><br><span class="line"><span class="meta">#<span class="keyword">elif</span> UNITY_ANDROID</span></span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">const</span> <span class="built_in">string</span> PLATFORM = <span class="string">&quot;Android&quot;</span>;</span><br><span class="line"><span class="meta">#<span class="keyword">else</span></span></span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">const</span> <span class="built_in">string</span> PLATFORM = <span class="string">&quot;Windows&quot;</span>;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+
+<p>建一个BuilderSetting类，里面是序列化，配置xml文件用的，函数有什么处理后缀啊，存储，忽略列表，打包选项等等，核心就是能在主函数里配置这些东西去调用，具体代码自己看</p>
+<p>还有一个用来解析xml的类，上面那个是操作文件，这个是解析xml，包括了读取、保存和传出来的方法，文件名XmlUtility，自己看吧</p>
+<p>EbundleType枚举文件类型，ab粒度类型</p>
+<figure class="highlight c#"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="built_in">enum</span> EBundleType</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> 以文件作为ab名字（最小粒度）</span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">    File,</span><br><span class="line"></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> 以目录作为ab的名字</span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">    Directory,</span><br><span class="line"></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> 以最上的</span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">    All</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>还有资源类型函数EResourceType，合集写在BuildItem里，还包括资源后缀</p>
+<figure class="highlight c#"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="built_in">enum</span> EResourceType</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> 在打包设置中分析到的资源</span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">    Direct = <span class="number">1</span>,</span><br><span class="line"></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> 依赖资源</span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">    Dependency = <span class="number">2</span>,</span><br><span class="line"></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> 生成的文件</span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">    Ganerate = <span class="number">3</span>,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>打包流程，就是主函数下的Build，中间过程注释写的很清楚了</p>
+<figure class="highlight c#"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Build</span>()</span></span><br><span class="line">&#123;</span><br><span class="line">    ms_BuildProfiler.Start();</span><br><span class="line"></span><br><span class="line">    ms_SwitchPlatformProfiler.Start();</span><br><span class="line">    SwitchPlatform();</span><br><span class="line">    ms_SwitchPlatformProfiler.Stop();</span><br><span class="line"></span><br><span class="line">    ms_LoadBuildSettingProfiler.Start();</span><br><span class="line">    buildSetting = LoadSetting(BuildSettingPath);</span><br><span class="line">    ms_LoadBuildSettingProfiler.Stop();</span><br><span class="line"></span><br><span class="line">    <span class="comment">//搜集bundle信息</span></span><br><span class="line">    ms_CollectProfiler.Start();</span><br><span class="line">    Dictionary&lt;<span class="built_in">string</span>, List&lt;<span class="built_in">string</span>&gt;&gt; bundleDic = Collect();</span><br><span class="line">    ms_CollectProfiler.Stop();</span><br><span class="line"></span><br><span class="line">    <span class="comment">//打包assetbundle</span></span><br><span class="line">    ms_BuildBundleProfiler.Start();</span><br><span class="line">    BuildBundle(bundleDic);</span><br><span class="line">    ms_BuildBundleProfiler.Stop();</span><br><span class="line"></span><br><span class="line">    <span class="comment">//清空多余文件</span></span><br><span class="line">    ms_ClearBundleProfiler.Start();</span><br><span class="line">    ClearAssetBundle(buildPath, bundleDic);</span><br><span class="line">    ms_ClearBundleProfiler.Stop();</span><br><span class="line"></span><br><span class="line">    <span class="comment">//把描述文件打包bundle</span></span><br><span class="line">    ms_BuildManifestBundleProfiler.Start();</span><br><span class="line">    BuildManifest();</span><br><span class="line">    ms_BuildManifestBundleProfiler.Stop();</span><br><span class="line"></span><br><span class="line">    EditorUtility.ClearProgressBar();</span><br><span class="line"></span><br><span class="line">    ms_BuildProfiler.Stop();</span><br><span class="line"></span><br><span class="line">    Debug.Log(<span class="string">$&quot;打包完成<span class="subst">&#123;ms_BuildProfiler&#125;</span>&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>，先收集信息，将文件信息收集进主函数的方法：</p>
+<figure class="highlight c#"><table><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> Dictionary&lt;<span class="built_in">string</span>, List&lt;<span class="built_in">string</span>&gt;&gt; Collect()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">//获取所有在打包设置的文件列表</span></span><br><span class="line">    ms_CollectBuildSettingFileProfiler.Start();</span><br><span class="line">    HashSet&lt;<span class="built_in">string</span>&gt; files = buildSetting.Collect();</span><br><span class="line">    ms_CollectBuildSettingFileProfiler.Stop();</span><br><span class="line"></span><br><span class="line">    <span class="comment">//搜集所有文件的依赖关系</span></span><br><span class="line">    ms_CollectDependencyProfiler.Start();</span><br><span class="line">    Dictionary&lt;<span class="built_in">string</span>, List&lt;<span class="built_in">string</span>&gt;&gt; dependencyDic = CollectDependency(files);</span><br><span class="line">    ms_CollectDependencyProfiler.Stop();</span><br><span class="line"></span><br><span class="line">    <span class="comment">//标记所有资源的信息</span></span><br><span class="line">    Dictionary&lt;<span class="built_in">string</span>, EResourceType&gt; assetDic = <span class="keyword">new</span> Dictionary&lt;<span class="built_in">string</span>, EResourceType&gt;();</span><br><span class="line"></span><br><span class="line">    <span class="comment">//被打包配置分析到的直接设置为Direct</span></span><br><span class="line">    <span class="keyword">foreach</span> (<span class="built_in">string</span> url <span class="keyword">in</span> files)</span><br><span class="line">    &#123;</span><br><span class="line">        assetDic.Add(url, EResourceType.Direct);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//依赖的资源标记为Dependency，已经存在的说明是Direct的资源</span></span><br><span class="line">    <span class="keyword">foreach</span> (<span class="built_in">string</span> url <span class="keyword">in</span> dependencyDic.Keys)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (!assetDic.ContainsKey(url))</span><br><span class="line">        &#123;</span><br><span class="line">            assetDic.Add(url, EResourceType.Dependency);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//该字典保存bundle对应的资源集合</span></span><br><span class="line">    ms_CollectBundleProfiler.Start();</span><br><span class="line">    Dictionary&lt;<span class="built_in">string</span>, List&lt;<span class="built_in">string</span>&gt;&gt; bundleDic = CollectBundle(buildSetting, assetDic, dependencyDic);</span><br><span class="line">    ms_CollectBundleProfiler.Stop();</span><br><span class="line"></span><br><span class="line">    <span class="comment">//生成Manifest文件</span></span><br><span class="line">    ms_GenerateManifestProfiler.Start();</span><br><span class="line">    GenerateManifest(assetDic, bundleDic, dependencyDic);</span><br><span class="line">    ms_GenerateManifestProfiler.Stop();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> bundleDic;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>里面调用的两个函数的功能为收集指定文件集合所有的依赖信息和搜集bundle对应的ab名字，自己看函数吧</p>
+<p>Collect最后还需要一个生成Manifest的函数，写在下面了，主要三步，生成资源描述信息，生成bundle描述信息和生成资源依赖描述信息，代码太长，不贴了</p>
+<p>信息收集完以后，打包assetbundle</p>
+<figure class="highlight c#"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> AssetBundleManifest <span class="title">BuildBundle</span>(<span class="params">Dictionary&lt;<span class="built_in">string</span>, List&lt;<span class="built_in">string</span>&gt;&gt; bundleDic</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">float</span> min = ms_BuildBundleProgress.x;</span><br><span class="line">    <span class="built_in">float</span> max = ms_BuildBundleProgress.y;</span><br><span class="line"></span><br><span class="line">    EditorUtility.DisplayProgressBar(<span class="string">$&quot;<span class="subst">&#123;<span class="keyword">nameof</span>(BuildBundle)&#125;</span>&quot;</span>, <span class="string">&quot;打包AssetBundle&quot;</span>, min);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!Directory.Exists(buildPath))</span><br><span class="line">        Directory.CreateDirectory(buildPath);</span><br><span class="line"></span><br><span class="line">    AssetBundleManifest manifest = BuildPipeline.BuildAssetBundles(buildPath, GetBuilds(bundleDic), BuildAssetBundleOptions, EditorUserBuildSettings.activeBuildTarget);</span><br><span class="line"></span><br><span class="line">    EditorUtility.DisplayProgressBar(<span class="string">$&quot;<span class="subst">&#123;<span class="keyword">nameof</span>(BuildBundle)&#125;</span>&quot;</span>, <span class="string">&quot;打包AssetBundle&quot;</span>, max);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> manifest;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>和获取所有需要打包的AssetBundleBuild</p>
+<figure class="highlight c#"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> AssetBundleBuild[] <span class="title">GetBuilds</span>(<span class="params">Dictionary&lt;<span class="built_in">string</span>, List&lt;<span class="built_in">string</span>&gt;&gt; bundleTable</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">int</span> index = <span class="number">0</span>;</span><br><span class="line">    AssetBundleBuild[] assetBundleBuilds = <span class="keyword">new</span> AssetBundleBuild[bundleTable.Count];</span><br><span class="line">    <span class="keyword">foreach</span> (KeyValuePair&lt;<span class="built_in">string</span>, List&lt;<span class="built_in">string</span>&gt;&gt; pair <span class="keyword">in</span> bundleTable)</span><br><span class="line">    &#123;</span><br><span class="line">        assetBundleBuilds[index++] = <span class="keyword">new</span> AssetBundleBuild()</span><br><span class="line">        &#123;</span><br><span class="line">            assetBundleName = pair.Key,</span><br><span class="line">            assetNames = pair.Value.ToArray(),</span><br><span class="line">        &#125;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> assetBundleBuilds;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>清理多余的AssetBundle</p>
+<figure class="highlight c#"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">ClearAssetBundle</span>(<span class="params"><span class="built_in">string</span> path, Dictionary&lt;<span class="built_in">string</span>, List&lt;<span class="built_in">string</span>&gt;&gt; bundleDic</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">float</span> min = ms_ClearBundleProgress.x;</span><br><span class="line">    <span class="built_in">float</span> max = ms_ClearBundleProgress.y;</span><br><span class="line"></span><br><span class="line">    EditorUtility.DisplayProgressBar(<span class="string">$&quot;<span class="subst">&#123;<span class="keyword">nameof</span>(ClearAssetBundle)&#125;</span>&quot;</span>, <span class="string">&quot;清除多余的AssetBundle文件&quot;</span>, min);</span><br><span class="line"></span><br><span class="line">    List&lt;<span class="built_in">string</span>&gt; fileList = GetFiles(path, <span class="literal">null</span>, <span class="literal">null</span>);</span><br><span class="line">    HashSet&lt;<span class="built_in">string</span>&gt; fileSet = <span class="keyword">new</span> HashSet&lt;<span class="built_in">string</span>&gt;(fileList);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">foreach</span> (<span class="built_in">string</span> bundle <span class="keyword">in</span> bundleDic.Keys)</span><br><span class="line">    &#123;</span><br><span class="line">        fileSet.Remove(<span class="string">$&quot;<span class="subst">&#123;path&#125;</span><span class="subst">&#123;bundle&#125;</span>&quot;</span>);</span><br><span class="line">        fileSet.Remove(<span class="string">$&quot;<span class="subst">&#123;path&#125;</span><span class="subst">&#123;bundle&#125;</span><span class="subst">&#123;BUNDLE_MANIFEST_SUFFIX&#125;</span>&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    fileSet.Remove(<span class="string">$&quot;<span class="subst">&#123;path&#125;</span><span class="subst">&#123;PLATFORM&#125;</span>&quot;</span>);</span><br><span class="line">    fileSet.Remove(<span class="string">$&quot;<span class="subst">&#123;path&#125;</span><span class="subst">&#123;PLATFORM&#125;</span><span class="subst">&#123;BUNDLE_MANIFEST_SUFFIX&#125;</span>&quot;</span>);</span><br><span class="line"></span><br><span class="line">    Parallel.ForEach(fileSet, ParallelOptions, File.Delete);</span><br><span class="line"></span><br><span class="line">    EditorUtility.DisplayProgressBar(<span class="string">$&quot;<span class="subst">&#123;<span class="keyword">nameof</span>(ClearAssetBundle)&#125;</span>&quot;</span>, <span class="string">&quot;清除多余的AssetBundle文件&quot;</span>, max);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>最后，把描述文件打包bundle</p>
+<figure class="highlight c#"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">BuildManifest</span>()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">float</span> min = ms_BuildManifestProgress.x;</span><br><span class="line">    <span class="built_in">float</span> max = ms_BuildManifestProgress.y;</span><br><span class="line"></span><br><span class="line">    EditorUtility.DisplayProgressBar(<span class="string">$&quot;<span class="subst">&#123;<span class="keyword">nameof</span>(BuildManifest)&#125;</span>&quot;</span>, <span class="string">&quot;将Manifest打包成AssetBundle&quot;</span>, min);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!Directory.Exists(TempBuildPath))</span><br><span class="line">        Directory.CreateDirectory(TempBuildPath);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">string</span> prefix = Application.dataPath.Replace(<span class="string">&quot;/Assets&quot;</span>, <span class="string">&quot;/&quot;</span>).Replace(<span class="string">&quot;\\&quot;</span>, <span class="string">&quot;/&quot;</span>);</span><br><span class="line"></span><br><span class="line">    AssetBundleBuild manifest = <span class="keyword">new</span> AssetBundleBuild();</span><br><span class="line">    manifest.assetBundleName = <span class="string">$&quot;<span class="subst">&#123;MANIFEST&#125;</span><span class="subst">&#123;BUNDLE_SUFFIX&#125;</span>&quot;</span>;</span><br><span class="line">    manifest.assetNames = <span class="keyword">new</span> <span class="built_in">string</span>[<span class="number">3</span>]</span><br><span class="line">    &#123;</span><br><span class="line">        ResourcePath_Binary.Replace(prefix,<span class="string">&quot;&quot;</span>),</span><br><span class="line">        BundlePath_Binary.Replace(prefix,<span class="string">&quot;&quot;</span>),</span><br><span class="line">        DependencyPath_Binary.Replace(prefix,<span class="string">&quot;&quot;</span>),</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    EditorUtility.DisplayProgressBar(<span class="string">$&quot;<span class="subst">&#123;<span class="keyword">nameof</span>(BuildManifest)&#125;</span>&quot;</span>, <span class="string">&quot;将Manifest打包成AssetBundle&quot;</span>, min + (max - min) * <span class="number">0.5f</span>);</span><br><span class="line"></span><br><span class="line">    AssetBundleManifest assetBundleManifest = BuildPipeline.BuildAssetBundles(TempBuildPath, <span class="keyword">new</span> AssetBundleBuild[] &#123; manifest &#125;, BuildAssetBundleOptions, EditorUserBuildSettings.activeBuildTarget);</span><br><span class="line"></span><br><span class="line">    <span class="comment">//把文件copy到build目录</span></span><br><span class="line">    <span class="keyword">if</span> (assetBundleManifest)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">string</span> manifestFile = <span class="string">$&quot;<span class="subst">&#123;TempBuildPath&#125;</span>/<span class="subst">&#123;MANIFEST&#125;</span><span class="subst">&#123;BUNDLE_SUFFIX&#125;</span>&quot;</span>;</span><br><span class="line">        <span class="built_in">string</span> target = <span class="string">$&quot;<span class="subst">&#123;buildPath&#125;</span>/<span class="subst">&#123;MANIFEST&#125;</span><span class="subst">&#123;BUNDLE_SUFFIX&#125;</span>&quot;</span>;</span><br><span class="line">        <span class="keyword">if</span> (File.Exists(manifestFile))</span><br><span class="line">        &#123;</span><br><span class="line">            File.Copy(manifestFile, target);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//删除临时目录</span></span><br><span class="line">    <span class="keyword">if</span> (Directory.Exists(TempBuildPath))</span><br><span class="line">        Directory.Delete(TempBuildPath, <span class="literal">true</span>);</span><br><span class="line"></span><br><span class="line">    EditorUtility.DisplayProgressBar(<span class="string">$&quot;<span class="subst">&#123;<span class="keyword">nameof</span>(BuildManifest)&#125;</span>&quot;</span>, <span class="string">&quot;将Manifest打包成AssetBundle&quot;</span>, max);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>把buildsetting里的获取BundleName的函数补一下，现在就已经能跑了，会在项目外面生成几个.ab的文件，那些就是打包的文件。</p>
+<p>接着要考虑怎么加载的问题，写在Demo下的Test_Callback里</p>
+<p>主要是这个函数，剩下都是找文件名和拼接字符串的</p>
+<figure class="highlight c#"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">Initialize</span>()</span></span><br><span class="line">&#123;</span><br><span class="line">    ResourceManager.instance.LoadWithCallback(<span class="string">&quot;Assets/AssetBundle/UI/UIRoot.prefab&quot;</span>, <span class="literal">true</span>, uiRootResource =&gt;</span><br><span class="line">    &#123;</span><br><span class="line">        uiRootResource.Instantiate();</span><br><span class="line"></span><br><span class="line">        Transform uiParent = GameObject.Find(<span class="string">&quot;Canvas&quot;</span>).transform;</span><br><span class="line"></span><br><span class="line">        ResourceManager.instance.LoadWithCallback(<span class="string">&quot;Assets/AssetBundle/UI/TestUI.prefab&quot;</span>, <span class="literal">true</span>, testUIResource =&gt;</span><br><span class="line">        &#123;</span><br><span class="line">            testUIResource.Instantiate(uiParent, <span class="literal">false</span>);</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>要达成加载的目的，也就引出了下一个函数，就是我们需要一个ResourceManager来管理这些加载项，在Core里的Resource下，里面有ResourceManager</p>
+<p>代码太长不贴了，大概就是读取资源信息，读取bundle信息，读取资源依赖信息，加载这些信息，和最后释放这些信息</p>
+<p>bundle加载，在Bundle文件夹下，同步异步加载资源，Demo里有个Test_Callback，会调用加载</p>
+<p>在lateupdate里写卸载函数时要注意，不断轮询确保及时卸载不用的Ab</p>
+<figure class="highlight c#"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">LateUpdate</span>()</span></span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">if</span> (m_NeedUnloadList.Count == <span class="number">0</span>)</span><br><span class="line">                <span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">while</span> (m_NeedUnloadList.Count &gt; <span class="number">0</span>)</span><br><span class="line">            &#123;</span><br><span class="line">                ABundle bundle = m_NeedUnloadList.First.Value;</span><br><span class="line">                m_NeedUnloadList.RemoveFirst();</span><br><span class="line">                <span class="keyword">if</span> (bundle == <span class="literal">null</span>)</span><br><span class="line">                    <span class="keyword">continue</span>;</span><br><span class="line"></span><br><span class="line">                m_BundleDic.Remove(bundle.url);</span><br><span class="line"></span><br><span class="line">                <span class="keyword">if</span> (!bundle.done &amp;&amp; bundle <span class="keyword">is</span> BundleAsync)</span><br><span class="line">                &#123;</span><br><span class="line">                    BundleAsync bundleAsync = bundle <span class="keyword">as</span> BundleAsync;</span><br><span class="line">                    <span class="keyword">if</span> (m_AsyncList.Contains(bundleAsync))</span><br><span class="line">                        m_AsyncList.Remove(bundleAsync);</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                bundle.UnLoad();</span><br><span class="line"></span><br><span class="line">                <span class="comment">//依赖引用-1</span></span><br><span class="line">                <span class="keyword">if</span> (bundle.dependencies != <span class="literal">null</span>)</span><br><span class="line">                &#123;</span><br><span class="line">                    <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; bundle.dependencies.Length; i++)</span><br><span class="line">                    &#123;</span><br><span class="line">                        ABundle temp = bundle.dependencies[i];</span><br><span class="line">                        UnLoad(temp);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+
+<p>同样，在加载的时候，要确保打包没有循环依赖即可</p>
+<figure class="highlight c#"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> ABundle <span class="title">LoadInternal</span>(<span class="params"><span class="built_in">string</span> url, <span class="built_in">bool</span> <span class="keyword">async</span></span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    ABundle bundle;</span><br><span class="line">    <span class="keyword">if</span> (m_BundleDic.TryGetValue(url, <span class="keyword">out</span> bundle))</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (bundle.reference == <span class="number">0</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            m_NeedUnloadList.Remove(bundle);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">//从缓存中取并引用+1</span></span><br><span class="line">        bundle.AddReference();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> bundle;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//创建ab</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">async</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        bundle = <span class="keyword">new</span> BundleAsync();</span><br><span class="line">        bundle.url = url;</span><br><span class="line">        m_AsyncList.Add(bundle <span class="keyword">as</span> ABundleAsync);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        bundle = <span class="keyword">new</span> Bundle();</span><br><span class="line">        bundle.url = url;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    m_BundleDic.Add(url, bundle);</span><br><span class="line"></span><br><span class="line">    <span class="comment">//加载依赖</span></span><br><span class="line">    <span class="built_in">string</span>[] dependencies = m_AssetBundleManifest.GetDirectDependencies(url);</span><br><span class="line">    <span class="keyword">if</span> (dependencies.Length &gt; <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        bundle.dependencies = <span class="keyword">new</span> ABundle[dependencies.Length];</span><br><span class="line">        <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; dependencies.Length; i++)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="built_in">string</span> dependencyUrl = dependencies[i];</span><br><span class="line">            ABundle dependencyBundle = LoadInternal(dependencyUrl, <span class="keyword">async</span>);</span><br><span class="line">            bundle.dependencies[i] = dependencyBundle;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    bundle.AddReference();</span><br><span class="line"></span><br><span class="line">    bundle.Load();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> bundle;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>Unity</category>
+      </categories>
+      <tags>
+        <tag>U3D</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>CreatorKit-FPS</title>
     <url>/2024/03/11/CreatorKit-FPS/</url>
     <content><![CDATA[<h1 id="Unity3D项目初识"><a href="#Unity3D项目初识" class="headerlink" title="Unity3D项目初识"></a>Unity3D项目初识</h1><p>与Playground类似，本项目作为Unity 3D项目的入门，是官方教程的一部分<span id="more"></span></p>
@@ -52,6 +127,62 @@
       </categories>
       <tags>
         <tag>U3D</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>NLP基础工具系列-注音&amp;分词工具</title>
+    <url>/2026/04/15/NLP%E5%9F%BA%E7%A1%80%E5%B7%A5%E5%85%B7%E7%B3%BB%E5%88%97-%E6%B3%A8%E9%9F%B3-%E5%88%86%E8%AF%8D%E5%B7%A5%E5%85%B7/</url>
+    <content><![CDATA[<h1 id="NLP基础工具"><a href="#NLP基础工具" class="headerlink" title="NLP基础工具"></a>NLP基础工具</h1><h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>企业级nlp工具制作时候的心得分享，本篇更新：注音器 和 分词工具</p>
+<p>项目依赖并非普通民用所能接触，只能大致解释原理，多的不便多说。<span id="more"></span></p>
+<h2 id="注音器"><a href="#注音器" class="headerlink" title="注音器"></a>注音器</h2><h3 id="开门见山"><a href="#开门见山" class="headerlink" title="开门见山"></a>开门见山</h3><p>python的注音器，可以理解为 <a href="https://github.com/mozillazg/python-pinyin">pypinyin</a> 的进化版，如果你有企业级的词库作为支撑，这个注音器是个不二之选。</p>
+<h3 id="调用方法"><a href="#调用方法" class="headerlink" title="调用方法"></a>调用方法</h3><blockquote>
+<p>from zhuyin_tool import zhuyin</p>
+<p>result &#x3D; zhuyin(text, best_match&#x3D;0, use_tokenizer&#x3D;0)</p>
+</blockquote>
+<p>text: 要注音的str</p>
+<p>best_match: 因为有多音，有多种可能输出，&#x3D;0全出，&#x3D;1只出top prob首选</p>
+<p>use_tokenizer：是否开启分词器，0不开，1开启</p>
+<p>注：就算不开分词器，注音器也内置了最大前向匹配的基础分词</p>
+<h3 id="背景介绍"><a href="#背景介绍" class="headerlink" title="背景介绍"></a>背景介绍</h3><p>在工业化的使用场景下，你会发现pypinyin是不够用的，分两个方面</p>
+<ol>
+<li>准确率问题：包括了pypinyin对多音字词的支持，评测下来准确率是90%左右浮动，差的那10%就等着源源不断的问题吧</li>
+<li>业务场景支撑不行：pypinyin只能首选和全出，没有统计的支撑，举些例子：出血(xue&#x2F;xie)，谁(shei&#x2F;shui)是。这些词的多音是都对的，但此时如果你的注音器只能出一个结果，就很尴尬了，比如你在聊天场景，你的注音库是 出血（chuxie）用户输入 chuxue 你是可以不出词吗？显然你会被人骂死。</li>
+</ol>
+<p>正确的做法是，你应该基于数据统计来做注音，这能在提升注音准确率的同时，顺带给你一个分流的逻辑，比如 chuxie 50% &#x2F; chuxue 50%，这会对你在做带拼音词库，百科，词表等相关业务的时候有重要的帮助，所以在此手搓了这个注音器。</p>
+<h3 id="原理简介"><a href="#原理简介" class="headerlink" title="原理简介"></a>原理简介</h3><p>注音器的逻辑很简单，你要先有两个带拼音和统计的字典，然后最大前向匹配查字典就完了，如果有多段，记下概率后算笛卡尔积。如果要开分词器，开在最大前向匹配前。</p>
+<p><strong>关键在一手做字典的功力</strong></p>
+<p>首先你要有企业级的统计资源，比如你在：某聊天软件，某短视频字幕，某输入法，某搜索团队工作，这样你的统计回流做成的字典才能和pypinyin拉开大差距，我做下来，不同测试集正确率在97%-99%，pypinyin90%正确率。普通用户请出门左转pypinyin，已经很优秀了。</p>
+<p>然后就是根据hive回流统计去做字典，这项目里的字典只是做个演示，从 <a href="https://github.com/iDvel/rime-ice">雾凇拼音</a> 偷了一个大致像样主字典做的，做字典程序在 build_zhuyin_dict里，给你个sample，不要真用了，这并非我在用的字典。正常做法你要从云侧去统计，spark计算。至于计算过程，你看一下 single_zhuyin_dict.json 和 multi_zhuyin_dict.json 的格式应该就明白了。</p>
+<h3 id="问题解释"><a href="#问题解释" class="headerlink" title="问题解释"></a>问题解释</h3><p>有兄弟问了个很好的问题，比如 重 这个字，分布是：zhong 0.9，chong 0.1，那么我遇到 重大校区，即重庆大学校区的缩写，按笛卡尔积算不是照样首选zhongda吗？</p>
+<p>答案很简单，就是你的多字词库里要有，重大校区 这种搭配，或者你要去搞二元字典，重大-校区，重大-学生，我是觉得直接收录一元和扩展搜索二元字典区别不大</p>
+<p>主要还是你要有标注的字典资源。自己手标是不现实的，别想了，要有用户”自愿“的为你标注的业务场景，比如你在微信，你能统计到用户打chongdaxiaoqu，对话发送了 重大校区，然后你给这两个打点统计对起来，这种顶级的标注资源。相关业务云侧的统计数据，每日是TB级的，所以可想而知类似工具背后依赖的迭代字典对比开源的这些注音项目是力大砖飞的。</p>
+<p>否则，没有资源的，请出门左转pypinyin熬。</p>
+<h2 id="分词器"><a href="#分词器" class="headerlink" title="分词器"></a>分词器</h2><h3 id="调用方法-1"><a href="#调用方法-1" class="headerlink" title="调用方法"></a>调用方法</h3><figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">from</span> tokenizer <span class="keyword">import</span> Tokenizer</span><br><span class="line"></span><br><span class="line">tokenizer = Tokenizer()</span><br><span class="line">    </span><br><span class="line">unigram_csv_path = <span class="string">&quot;sys_unigram.csv&quot;</span></span><br><span class="line">bigram_csv_path = <span class="string">&quot;sys_bigram.csv&quot;</span></span><br><span class="line"></span><br><span class="line">tokenizer.init(unigram_csv_path, bigram_csv_path)</span><br><span class="line">result = tokenizer.segment(text)</span><br></pre></td></tr></table></figure>
+
+<h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p>也是一个基于统计语言模型的中文分词器</p>
+<p>核心做法是利用一元模型(Unigram)和二元模型(Bigram)，通过动态规划寻找最优分词路径。</p>
+<p>为什么用这个手搓的，说是主要改了算法公式和0.5那个配比参数，公式是融合了jieba的，最后评测下来提升也是高10%。但在我看来评价有夸大成分，主要还是背后的词库好，所以能有这个提升。我的建议是用jieba，把词库换了就完事了。该程序是我现在在用的分词器，python版本的仿写，加入了一些个人的理解。</p>
+<h3 id="原理简述"><a href="#原理简述" class="headerlink" title="原理简述"></a>原理简述</h3><p>词典加载：从CSV文件加载词语的对数概率，构建Unigram和Bigram概率表</p>
+<p>文本预处理：用正则表达式分离英文、数字和空白字符</p>
+<p>Trie树索引：将词典组织成前缀树，实现O(n)时间内的词语快速查找</p>
+<p>DAG构建：为输入句子构建有向无环图，节点表示字位置，边表示可能的词语</p>
+<p>动态规划：使用维特比算法求解最优路径，通过线性插值平滑平衡一元和二元概率</p>
+<p>路径回溯：根据DP结果回溯得到最终的分词序列</p>
+<p>该方法结合了词典匹配和概率图模型的优点，能够处理未登录词并考虑上下文信息。</p>
+<p>最终的关键还是一手做词库的数据功底</p>
+<h3 id="词库制作"><a href="#词库制作" class="headerlink" title="词库制作"></a>词库制作</h3><p>分词器依靠的是一个带分数的一元二元词库，一元类似：明天，二元类似：明天-见</p>
+<p>你要根据统计数据去计算分数</p>
+<p>一元分数是先从一元回流去筛选和抽一部分词库词（这个就靠你自己去想怎么做了），抽完以后，算全局概率分布，然后-logE。有条件的话你可以映射0-225。</p>
+<p>二元分数是，在一元词库的基础上，去二元回流统计里，捞前元是一元的那些，记得按频率筛选一下。然后计算前后元的条件概率，再-logE</p>
+<p>由于我没找到有那种开源的二元统计，这里就空着了，只传了分词器的实现部分，仅供参考。</p>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>数据积累是一切算法实现的前提。</p>
+<p>其实这个世界从来没有什么弯道超车，有的只是厚积薄发。</p>
+]]></content>
+      <categories>
+        <category>Basice_tool</category>
+      </categories>
+      <tags>
+        <tag>NLP</tag>
       </tags>
   </entry>
   <entry>
@@ -210,280 +341,6 @@
 <li>方式一（一对一）：为游戏中每个要播放声音的游戏对象都配置音频源组件，并绑定该音频源的音频剪辑，通过代码来控制该声音源组件来播放其中的音频剪辑；</li>
 <li>方式二（一对多）：通过一个音频源，用代码控制播放多个不同的音频剪辑，使用 AudioSource 类对象的一个名为 PlayOneShot 的函数来实现</li>
 </ul>
-]]></content>
-      <categories>
-        <category>Unity</category>
-      </categories>
-      <tags>
-        <tag>U3D</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>生成在线URL</title>
-    <url>/2024/02/27/picture-URL/</url>
-    <content><![CDATA[<h1 id="本地图片生成在线URL"><a href="#本地图片生成在线URL" class="headerlink" title="本地图片生成在线URL"></a>本地图片生成在线URL</h1><p>方法就是用图床，找个在线图床网站，上传图片<span id="more"></span></p>
-<p>可用网址：<a href="https://sm.ms/">https://sm.ms/</a></p>
-<p>注册，上传图片，把网站给的Image URL复制下来就行</p>
-<h1 id="PDF生成-URL"><a href="#PDF生成-URL" class="headerlink" title="PDF生成 URL"></a>PDF生成 URL</h1><p>方法类似，找个pdf url工具，上传，生成</p>
-]]></content>
-      <categories>
-        <category>Web</category>
-      </categories>
-      <tags>
-        <tag>URL</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>系统代理设置</title>
-    <url>/2024/02/27/proxy-setting/</url>
-    <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>在git同步的时候，不是连不上github,就是连接超时，贼不习惯。</p>
-<p>网上搜了一圈乱七八糟的解决方案，很多都是要改源文件的，感觉根本不用那么麻烦就自己摸索了一下，简便的设置方法<span id="more"></span></p>
-<p>首先，代理设置全局(global)，全局，全局，重要的事说三遍。因为这基本解决了win上的git问题，但也有例外。</p>
-<p>首先，修改git的proxy和修改terminal的proxy不一样，分情况说：</p>
-<h2 id="Win"><a href="#Win" class="headerlink" title="Win"></a>Win</h2><h3 id="cmd-powershell修改proxy："><a href="#cmd-powershell修改proxy：" class="headerlink" title="cmd, powershell修改proxy："></a>cmd, powershell修改proxy：</h3><p>cmd：打开输入set http_proxy&#x3D;<a href="http://127.0.0.1:7890/">http://127.0.0.1:7890</a> 和 set https_proxy&#x3D;<a href="http://127.0.0.1:7890，7890是你的代理端口（proxy">http://127.0.0.1:7890，7890是你的代理端口（proxy</a> port），自己替换。</p>
-<p>Powershell：输入 $Env:http_proxy&#x3D;”<a href="http://127.0.0.1:7890/">http://127.0.0.1:7890</a>“ 和 $Env:https_proxy&#x3D;”<a href="http://127.0.0.1:7890"，代理端口同上。">http://127.0.0.1:7890&quot;，代理端口同上。</a></p>
-<p>clashX有一键复制，点port后的那个命令行小按键。但是是一次性的，每次重开窗口都要再打一遍，但我觉得比改源文件好，因为会影响电脑正常使用，还要去改回来。</p>
-<h3 id="Vscode-JetBrains"><a href="#Vscode-JetBrains" class="headerlink" title="Vscode &amp; JetBrains"></a>Vscode &amp; JetBrains</h3><p>设置CMD和prompt没用，vscode里打开终端设置也没用，但是有个更便捷的方法：</p>
-<p>文件-首选项-设置-应用程序-代理服务器-proxy，代理地址打进去。</p>
-<p>JetBrains基本跟vs一样，找http proxy设置，往里一输就完了。</p>
-<h2 id="Mac"><a href="#Mac" class="headerlink" title="Mac"></a>Mac</h2><p>首先还是全局，但mac是伪全局。</p>
-<h3 id="终端："><a href="#终端：" class="headerlink" title="终端："></a>终端：</h3><p>猫猫头右键，有个终端代理模式（之类的)</p>
-<p>输入terminal： </p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">export https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_proxy=socks5://127.0.0.1:7890</span><br></pre></td></tr></table></figure>
-
-<p>设置完了，什么brew，nvm，npm全能跑，不香吗。</p>
-<p>其他代理：同win cmd的方法，务必开全局，然后复制终端代理的代码。</p>
-<h2 id="直接修改git-proxy："><a href="#直接修改git-proxy：" class="headerlink" title="直接修改git proxy："></a>直接修改git proxy：</h2><p>各系统通用，但仅仅让git跑起来，例如mac上的brew，conda之类的，如果被墙了照样没用</p>
-<p>终端输入：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">git config --global https.proxy http://127.0.0.1:7890</span><br><span class="line">git config --global https.proxy https://127.0.0.1:7890</span><br></pre></td></tr></table></figure>
-
-<p>（ps：实在不行，github desktop解决一切问题，代理不开全局都能活）</p>
-]]></content>
-      <categories>
-        <category>Setup</category>
-      </categories>
-      <tags>
-        <tag>Proxy</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Unity Playground</title>
-    <url>/2024/03/09/unity-Playground/</url>
-    <content><![CDATA[<h1 id="Unity-练手第一个游戏"><a href="#Unity-练手第一个游戏" class="headerlink" title="Unity 练手第一个游戏"></a>Unity 练手第一个游戏</h1><p>Unity2D的初识项目，新手入门第一次项目体验。<span id="more"></span></p>
-<p>Unity官方网址： <a href="https://learn.unity.com/project/unity-playground">https://learn.unity.com/project/unity-playground</a></p>
-<p>主要流程还是要看官方教程，作为熟悉unity第一个上手项目，官方手把手教程，按步骤一步步来</p>
-<p>资源载入： <a href="https://assetstore.unity.com/packages/templates/tutorials/unity-learn-playground-urp-109917">https://assetstore.unity.com/packages/templates/tutorials/unity-learn-playground-urp-109917</a></p>
-<p>按上一篇教程，创建2D空模版，package manager import</p>
-<p>这个教程里主要是2D项目的入门介绍，脚本都已经写好了，主要是熟悉控件和unity2D的使用</p>
-<p>里面还有很多初级的游戏模版，可以直接运行，控件脚本可以打开看一看。</p>
-<p>Playground的项目里还有好几个example，可以都运行一下，启发启发灵感。</p>
-]]></content>
-      <categories>
-        <category>Unity</category>
-      </categories>
-      <tags>
-        <tag>U3D</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Unity，启动!</title>
-    <url>/2024/03/06/unity-begin/</url>
-    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><blockquote>
-<p>万事开头难，中间难，结尾难</p>
-<p>世上无难事，只要肯放弃</p>
-</blockquote>
-<p>本篇记录unity入门和常用资源内容链接</p>
-<p>官方教程内容是最好的内容！<span id="more"></span></p>
-<h2 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h2><ol>
-<li><p>C# 环境配置</p>
-<p>win专属：visual studio一步到位，选C# 桌面应用，unity扩展这两项即可。</p>
-<p>或者：</p>
-<p>下载dotnet（官网或者brew），vscode扩展，rider。</p>
-<p>mac要多下一个mono框架</p>
-</li>
-<li><p>unity配置</p>
-<p>官网下载unity hub，hub安装选择unity版本</p>
-<p>建议不要默认，进去自选，最小安装，以后可以加配（加了不能删，什么鬼啊！）</p>
-<p>设置unity使用的编辑器，默认win和mac都是vs（mac的vs都快GG了）</p>
-<p>编辑器的unity好用插件，按需求来</p>
-</li>
-</ol>
-<h2 id="官方资源"><a href="#官方资源" class="headerlink" title="官方资源"></a>官方资源</h2><p>建议看英语，并不是中文不好看，而是中文文档是机翻！有些甚至不翻！（都有GPT了，有没有搞错啊）</p>
-<p>官网：<a href="https://unity.com/">https://unity.com</a></p>
-<p>文档：<a href="https://docs.unity.com/">https://docs.unity.com</a></p>
-<p>Unity Learn：<a href="https://learn.unity.com/">https://learn.unity.com</a></p>
-<p>Assert Store：<a href="https://assetstore.unity.com/">https://assetstore.unity.com</a></p>
-<blockquote>
-<p>先在assert store里import，然后hub创建空项目，package manager导入</p>
-</blockquote>
-<h2 id="软件界面"><a href="#软件界面" class="headerlink" title="软件界面"></a>软件界面</h2><p>软件界面各个按键是操作的基本，看官方文档吧</p>
-<p>顺便b站和github都有教程，边做边熟悉，关键是一些画面快速操作的快捷键</p>
-]]></content>
-      <categories>
-        <category>Unity</category>
-      </categories>
-      <tags>
-        <tag>U3D</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>搭建个人博客</title>
-    <url>/2024/02/27/%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2/</url>
-    <content><![CDATA[<h1 id="个人博客搭建指北"><a href="#个人博客搭建指北" class="headerlink" title="个人博客搭建指北"></a>个人博客搭建指北</h1><p>搭建个人静态博客，Hexo+Next+Github Pages。</p>
-<p>平台：macos</p>
-<p>本地：nvm，JS一套，Hexo，Next主题</p>
-<p>网站：免费github pages，或自己搞个云服务<span id="more"></span></p>
-<h1 id="本地配置"><a href="#本地配置" class="headerlink" title="本地配置"></a>本地配置</h1><ol>
-<li><p>Xcode开发工具，带有一些基础环境和git</p>
-</li>
-<li><p>安装本地NodeJS</p>
-<ol>
-<li><p>这一步有坑，不要brew安装或者官网的sdk安装，会报错。在安装 Hexo 的过程中出现 <code>EACCES</code> 权限错误，这里不要看网上的建议，<strong>不要</strong> 使用 root、sudo 等方法覆盖权限。会报更大的错！</p>
-</li>
-<li><p>使用nvm或者nvs部署，这里用的是nvm。</p>
-<p>链接：<a href="https://github.com/nvm-sh/nvm">https://github.com/nvm-sh/nvm</a></p>
-<p>terminal命令：</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh</span><br></pre></td></tr></table></figure>
-
-<p>下完验证一下</p>
-<p><code>nvm -v</code></p>
-<p>如果没有，去配一下环境，别看网上一堆，要找mac zsh添加环境</p>
-</li>
-<li><p>nvm安装node和npm</p>
-<p><code>nvm install node</code> 可以指定版本，看一下nvm help</p>
-<p>装完验证一下，不行加环境变量</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">node -v</span><br><span class="line">npm -v</span><br></pre></td></tr></table></figure></li>
-</ol>
-</li>
-<li><p>安装Hexo</p>
-<p>精简版</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">npm install -g hexo-cli</span><br></pre></td></tr></table></figure>
-
-<p>也可以用完整版安装指令，装完验证，要指定版本的话记得看一下版本对应</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo -v</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>建站，创立项目文件夹</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo init &lt;folder&gt;</span><br><span class="line">cd &lt;folder&gt;</span><br><span class="line">npm install</span><br></pre></td></tr></table></figure>
-
-<p>可以自定义路径，现在文件夹在主目录下，可以查看</p>
-</li>
-<li><p>在文件夹安装Next主题</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd your-hexo-site</span><br><span class="line">git clone https://github.com/iissnan/hexo-theme-next themes/next</span><br></pre></td></tr></table></figure>
-
-<p>大功告成</p>
-</li>
-</ol>
-<h1 id="Hexo"><a href="#Hexo" class="headerlink" title="Hexo"></a>Hexo</h1><p>没有什么，是比官方文档更好使的教程！</p>
-<p>中文：<a href="https://hexo.io/zh-cn/docs/">https://hexo.io/zh-cn/docs/</a> 英语：<a href="https://hexo.io/docs/index.html">https://hexo.io/docs/index.html</a></p>
-<p>创建文章，编辑source下的markdown文件。</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo new [layout] &lt;title&gt;</span><br></pre></td></tr></table></figure>
-
-<p>生成</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo g</span><br></pre></td></tr></table></figure>
-
-<p>服务器预览</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo s</span><br></pre></td></tr></table></figure>
-
-<p>发布</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo d</span><br></pre></td></tr></table></figure>
-
-<h2 id="部署github"><a href="#部署github" class="headerlink" title="部署github"></a>部署github</h2><ol>
-<li><p>安装 <a href="https://github.com/hexojs/hexo-deployer-git">hexo-deployer-git</a>。</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">npm install hexo-deployer-git --save</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>修改主config.yml配置</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">deploy:</span><br><span class="line">  type: git</span><br><span class="line">  repo: &lt;repository url&gt; #https://bitbucket.org/JohnSmith/johnsmith.bitbucket.io</span><br><span class="line">  branch: [branch]</span><br><span class="line">  message: [message]</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>生成站点文件并推送至远程库。执行 <code>hexo clean &amp;&amp; hexo deploy</code>。注意，如果是从站，config里把前面的网站URL设置一下</p>
-</li>
-</ol>
-<p><em><strong>GitHub Pages 源存储库的建议限制为1 GB。 有关详细信息，请参阅“关于GitHub 上的大文件” 发布的GitHub Pages 站点不得超过1 GB。 如果花费的时间超过10 分钟，GitHub Pages 部署将超时。</strong></em></p>
-<p><em><strong>个人主页只能创建一个，项目主页可以创建多个</strong></em></p>
-<h1 id="Next主题"><a href="#Next主题" class="headerlink" title="Next主题"></a>Next主题</h1><p>同给出官方文档链接：</p>
-<p><a href="https://theme-next.iissnan.com/">https://theme-next.iissnan.com/</a></p>
-<p>似乎是旧版的，新版的我只找到更新日志，但是旧版大多通用</p>
-<p><a href="https://theme-next.org/index.html">https://theme-next.org/index.html</a></p>
-<p>在config里的修改theme，即可启用主题</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">theme: next</span><br></pre></td></tr></table></figure>
-
-<p>剩下的自定义功能还是去看官方文档吧</p>
-<hr>
-<p>（ps: 第一次用typora写完一个文档，感觉好难用啊，有些本来要用上的html语法都识别不出来，:(，还有格式问题，不如直接vscode编辑，大呼上当)</p>
-]]></content>
-      <categories>
-        <category>Web</category>
-      </categories>
-      <tags>
-        <tag>Blog</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Unity AssetBundle实战</title>
-    <url>/2024/06/03/AssetBundle%E5%AE%9E%E6%88%98/</url>
-    <content><![CDATA[<h1 id="AssetBundle实战（AB打包）"><a href="#AssetBundle实战（AB打包）" class="headerlink" title="AssetBundle实战（AB打包）"></a>AssetBundle实战（AB打包）</h1><h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>AssetBundle打包实战项目，主要是AssetBundle怎么打包的，怎么加载以及卸载的过场和原理，随便倒了个资源包进来，进行实操。</p>
-<p>还有对相关理论问题的一些总结<span id="more"></span></p>
-<p>项目地址: <a href="https://github.com/GongQihua/AssetBundlePractise">传送门</a>, 演示视频在DEMO文件夹下。</p>
-<h2 id="编译器打包工具开发"><a href="#编译器打包工具开发" class="headerlink" title="编译器打包工具开发"></a>编译器打包工具开发</h2><blockquote>
-<p>打出的ab资源在工程同级的AssetBundle下</p>
-<p>可以无缝切换编辑器和AB加载方式</p>
-<p>注意AB模式下，改完资源记得Tools&#x2F;ResBuild一下</p>
-<p>支持同步异步等方式</p>
-<p>具体的打包配置在BuildSetting.xml里配置即可，具体精细到文件还是文件夹都可以。</p>
-</blockquote>
-<p>主要工程代码在AssetBundleFramework下，core和editor</p>
-<p>现在菜单里创建打包工具，方便使用，大概方法：</p>
-<figure class="highlight c#"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">region</span> Build MenuItem</span></span><br><span class="line"></span><br><span class="line">        [<span class="meta">MenuItem(<span class="string">&quot;Tools/ResBuild/Windows&quot;</span>)</span>]</span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">BuildWindows</span>()</span></span><br><span class="line">        &#123;</span><br><span class="line">            Build();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        [<span class="meta">MenuItem(<span class="string">&quot;Tools/ResBuild/Android&quot;</span>)</span>]</span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">BuildAndroid</span>()</span></span><br><span class="line">        &#123;</span><br><span class="line">            Build();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        [<span class="meta">MenuItem(<span class="string">&quot;Tools/ResBuild/iOS&quot;</span>)</span>]</span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">BuildIos</span>()</span></span><br><span class="line">        &#123;</span><br><span class="line">            Build();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">endregion</span></span></span><br></pre></td></tr></table></figure>
-
-<p>后面相似的创建就不复述了</p>
-<p>core里创建一个文件，Profiler，作为按键等操作的log输出。项目需要的是规范的log输出，记录干了什么，抛出错误，记录时间等等。代码自查吧，算是一个前置工作</p>
-<p>再就是打包的基本配置，不同平台需要不同的配置，配置是xml文件，切换配置的函数：</p>
-<figure class="highlight c#"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">SwitchPlatform</span>()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">string</span> platform = PLATFORM;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">switch</span> (platform)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&quot;windows&quot;</span>:</span><br><span class="line">            EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Standalone, BuildTarget.StandaloneWindows64);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&quot;android&quot;</span>:</span><br><span class="line">            EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Android, BuildTarget.Android);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> <span class="string">&quot;ios&quot;</span>:</span><br><span class="line">            EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.iOS, BuildTarget.iOS);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> BuildSetting <span class="title">LoadSetting</span>(<span class="params"><span class="built_in">string</span> settingPath</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    buildSetting = XmlUtility.Read&lt;BuildSetting&gt;(settingPath);</span><br><span class="line">    <span class="keyword">if</span> (buildSetting == <span class="literal">null</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> Exception(<span class="string">$&quot;Load buildSetting failed,SettingPath:<span class="subst">&#123;settingPath&#125;</span>.&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    (buildSetting <span class="keyword">as</span> ISupportInitialize)?.EndInit();</span><br><span class="line"></span><br><span class="line">    buildPath = Path.GetFullPath(buildSetting.buildRoot).Replace(<span class="string">&quot;\\&quot;</span>, <span class="string">&quot;/&quot;</span>);</span><br><span class="line">    <span class="keyword">if</span> (buildPath.Length &gt; <span class="number">0</span> &amp;&amp; buildPath[buildPath.Length - <span class="number">1</span>] != <span class="string">&#x27;/&#x27;</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        buildPath += <span class="string">&quot;/&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    buildPath += <span class="string">$&quot;<span class="subst">&#123;PLATFORM&#125;</span>/&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> buildSetting;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>启动切换：</p>
-<figure class="highlight c#"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">if</span> UNITY_IOS</span></span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">const</span> <span class="built_in">string</span> PLATFORM = <span class="string">&quot;iOS&quot;</span>;</span><br><span class="line"><span class="meta">#<span class="keyword">elif</span> UNITY_ANDROID</span></span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">const</span> <span class="built_in">string</span> PLATFORM = <span class="string">&quot;Android&quot;</span>;</span><br><span class="line"><span class="meta">#<span class="keyword">else</span></span></span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">const</span> <span class="built_in">string</span> PLATFORM = <span class="string">&quot;Windows&quot;</span>;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure>
-
-<p>建一个BuilderSetting类，里面是序列化，配置xml文件用的，函数有什么处理后缀啊，存储，忽略列表，打包选项等等，核心就是能在主函数里配置这些东西去调用，具体代码自己看</p>
-<p>还有一个用来解析xml的类，上面那个是操作文件，这个是解析xml，包括了读取、保存和传出来的方法，文件名XmlUtility，自己看吧</p>
-<p>EbundleType枚举文件类型，ab粒度类型</p>
-<figure class="highlight c#"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="built_in">enum</span> EBundleType</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> 以文件作为ab名字（最小粒度）</span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">    File,</span><br><span class="line"></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> 以目录作为ab的名字</span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">    Directory,</span><br><span class="line"></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> 以最上的</span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">    All</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>还有资源类型函数EResourceType，合集写在BuildItem里，还包括资源后缀</p>
-<figure class="highlight c#"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="built_in">enum</span> EResourceType</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> 在打包设置中分析到的资源</span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">    Direct = <span class="number">1</span>,</span><br><span class="line"></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> 依赖资源</span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">    Dependency = <span class="number">2</span>,</span><br><span class="line"></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> 生成的文件</span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">    Ganerate = <span class="number">3</span>,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>打包流程，就是主函数下的Build，中间过程注释写的很清楚了</p>
-<figure class="highlight c#"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Build</span>()</span></span><br><span class="line">&#123;</span><br><span class="line">    ms_BuildProfiler.Start();</span><br><span class="line"></span><br><span class="line">    ms_SwitchPlatformProfiler.Start();</span><br><span class="line">    SwitchPlatform();</span><br><span class="line">    ms_SwitchPlatformProfiler.Stop();</span><br><span class="line"></span><br><span class="line">    ms_LoadBuildSettingProfiler.Start();</span><br><span class="line">    buildSetting = LoadSetting(BuildSettingPath);</span><br><span class="line">    ms_LoadBuildSettingProfiler.Stop();</span><br><span class="line"></span><br><span class="line">    <span class="comment">//搜集bundle信息</span></span><br><span class="line">    ms_CollectProfiler.Start();</span><br><span class="line">    Dictionary&lt;<span class="built_in">string</span>, List&lt;<span class="built_in">string</span>&gt;&gt; bundleDic = Collect();</span><br><span class="line">    ms_CollectProfiler.Stop();</span><br><span class="line"></span><br><span class="line">    <span class="comment">//打包assetbundle</span></span><br><span class="line">    ms_BuildBundleProfiler.Start();</span><br><span class="line">    BuildBundle(bundleDic);</span><br><span class="line">    ms_BuildBundleProfiler.Stop();</span><br><span class="line"></span><br><span class="line">    <span class="comment">//清空多余文件</span></span><br><span class="line">    ms_ClearBundleProfiler.Start();</span><br><span class="line">    ClearAssetBundle(buildPath, bundleDic);</span><br><span class="line">    ms_ClearBundleProfiler.Stop();</span><br><span class="line"></span><br><span class="line">    <span class="comment">//把描述文件打包bundle</span></span><br><span class="line">    ms_BuildManifestBundleProfiler.Start();</span><br><span class="line">    BuildManifest();</span><br><span class="line">    ms_BuildManifestBundleProfiler.Stop();</span><br><span class="line"></span><br><span class="line">    EditorUtility.ClearProgressBar();</span><br><span class="line"></span><br><span class="line">    ms_BuildProfiler.Stop();</span><br><span class="line"></span><br><span class="line">    Debug.Log(<span class="string">$&quot;打包完成<span class="subst">&#123;ms_BuildProfiler&#125;</span>&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>，先收集信息，将文件信息收集进主函数的方法：</p>
-<figure class="highlight c#"><table><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> Dictionary&lt;<span class="built_in">string</span>, List&lt;<span class="built_in">string</span>&gt;&gt; Collect()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">//获取所有在打包设置的文件列表</span></span><br><span class="line">    ms_CollectBuildSettingFileProfiler.Start();</span><br><span class="line">    HashSet&lt;<span class="built_in">string</span>&gt; files = buildSetting.Collect();</span><br><span class="line">    ms_CollectBuildSettingFileProfiler.Stop();</span><br><span class="line"></span><br><span class="line">    <span class="comment">//搜集所有文件的依赖关系</span></span><br><span class="line">    ms_CollectDependencyProfiler.Start();</span><br><span class="line">    Dictionary&lt;<span class="built_in">string</span>, List&lt;<span class="built_in">string</span>&gt;&gt; dependencyDic = CollectDependency(files);</span><br><span class="line">    ms_CollectDependencyProfiler.Stop();</span><br><span class="line"></span><br><span class="line">    <span class="comment">//标记所有资源的信息</span></span><br><span class="line">    Dictionary&lt;<span class="built_in">string</span>, EResourceType&gt; assetDic = <span class="keyword">new</span> Dictionary&lt;<span class="built_in">string</span>, EResourceType&gt;();</span><br><span class="line"></span><br><span class="line">    <span class="comment">//被打包配置分析到的直接设置为Direct</span></span><br><span class="line">    <span class="keyword">foreach</span> (<span class="built_in">string</span> url <span class="keyword">in</span> files)</span><br><span class="line">    &#123;</span><br><span class="line">        assetDic.Add(url, EResourceType.Direct);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//依赖的资源标记为Dependency，已经存在的说明是Direct的资源</span></span><br><span class="line">    <span class="keyword">foreach</span> (<span class="built_in">string</span> url <span class="keyword">in</span> dependencyDic.Keys)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (!assetDic.ContainsKey(url))</span><br><span class="line">        &#123;</span><br><span class="line">            assetDic.Add(url, EResourceType.Dependency);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//该字典保存bundle对应的资源集合</span></span><br><span class="line">    ms_CollectBundleProfiler.Start();</span><br><span class="line">    Dictionary&lt;<span class="built_in">string</span>, List&lt;<span class="built_in">string</span>&gt;&gt; bundleDic = CollectBundle(buildSetting, assetDic, dependencyDic);</span><br><span class="line">    ms_CollectBundleProfiler.Stop();</span><br><span class="line"></span><br><span class="line">    <span class="comment">//生成Manifest文件</span></span><br><span class="line">    ms_GenerateManifestProfiler.Start();</span><br><span class="line">    GenerateManifest(assetDic, bundleDic, dependencyDic);</span><br><span class="line">    ms_GenerateManifestProfiler.Stop();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> bundleDic;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>里面调用的两个函数的功能为收集指定文件集合所有的依赖信息和搜集bundle对应的ab名字，自己看函数吧</p>
-<p>Collect最后还需要一个生成Manifest的函数，写在下面了，主要三步，生成资源描述信息，生成bundle描述信息和生成资源依赖描述信息，代码太长，不贴了</p>
-<p>信息收集完以后，打包assetbundle</p>
-<figure class="highlight c#"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> AssetBundleManifest <span class="title">BuildBundle</span>(<span class="params">Dictionary&lt;<span class="built_in">string</span>, List&lt;<span class="built_in">string</span>&gt;&gt; bundleDic</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">float</span> min = ms_BuildBundleProgress.x;</span><br><span class="line">    <span class="built_in">float</span> max = ms_BuildBundleProgress.y;</span><br><span class="line"></span><br><span class="line">    EditorUtility.DisplayProgressBar(<span class="string">$&quot;<span class="subst">&#123;<span class="keyword">nameof</span>(BuildBundle)&#125;</span>&quot;</span>, <span class="string">&quot;打包AssetBundle&quot;</span>, min);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!Directory.Exists(buildPath))</span><br><span class="line">        Directory.CreateDirectory(buildPath);</span><br><span class="line"></span><br><span class="line">    AssetBundleManifest manifest = BuildPipeline.BuildAssetBundles(buildPath, GetBuilds(bundleDic), BuildAssetBundleOptions, EditorUserBuildSettings.activeBuildTarget);</span><br><span class="line"></span><br><span class="line">    EditorUtility.DisplayProgressBar(<span class="string">$&quot;<span class="subst">&#123;<span class="keyword">nameof</span>(BuildBundle)&#125;</span>&quot;</span>, <span class="string">&quot;打包AssetBundle&quot;</span>, max);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> manifest;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>和获取所有需要打包的AssetBundleBuild</p>
-<figure class="highlight c#"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> AssetBundleBuild[] <span class="title">GetBuilds</span>(<span class="params">Dictionary&lt;<span class="built_in">string</span>, List&lt;<span class="built_in">string</span>&gt;&gt; bundleTable</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">int</span> index = <span class="number">0</span>;</span><br><span class="line">    AssetBundleBuild[] assetBundleBuilds = <span class="keyword">new</span> AssetBundleBuild[bundleTable.Count];</span><br><span class="line">    <span class="keyword">foreach</span> (KeyValuePair&lt;<span class="built_in">string</span>, List&lt;<span class="built_in">string</span>&gt;&gt; pair <span class="keyword">in</span> bundleTable)</span><br><span class="line">    &#123;</span><br><span class="line">        assetBundleBuilds[index++] = <span class="keyword">new</span> AssetBundleBuild()</span><br><span class="line">        &#123;</span><br><span class="line">            assetBundleName = pair.Key,</span><br><span class="line">            assetNames = pair.Value.ToArray(),</span><br><span class="line">        &#125;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> assetBundleBuilds;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>清理多余的AssetBundle</p>
-<figure class="highlight c#"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">ClearAssetBundle</span>(<span class="params"><span class="built_in">string</span> path, Dictionary&lt;<span class="built_in">string</span>, List&lt;<span class="built_in">string</span>&gt;&gt; bundleDic</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">float</span> min = ms_ClearBundleProgress.x;</span><br><span class="line">    <span class="built_in">float</span> max = ms_ClearBundleProgress.y;</span><br><span class="line"></span><br><span class="line">    EditorUtility.DisplayProgressBar(<span class="string">$&quot;<span class="subst">&#123;<span class="keyword">nameof</span>(ClearAssetBundle)&#125;</span>&quot;</span>, <span class="string">&quot;清除多余的AssetBundle文件&quot;</span>, min);</span><br><span class="line"></span><br><span class="line">    List&lt;<span class="built_in">string</span>&gt; fileList = GetFiles(path, <span class="literal">null</span>, <span class="literal">null</span>);</span><br><span class="line">    HashSet&lt;<span class="built_in">string</span>&gt; fileSet = <span class="keyword">new</span> HashSet&lt;<span class="built_in">string</span>&gt;(fileList);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">foreach</span> (<span class="built_in">string</span> bundle <span class="keyword">in</span> bundleDic.Keys)</span><br><span class="line">    &#123;</span><br><span class="line">        fileSet.Remove(<span class="string">$&quot;<span class="subst">&#123;path&#125;</span><span class="subst">&#123;bundle&#125;</span>&quot;</span>);</span><br><span class="line">        fileSet.Remove(<span class="string">$&quot;<span class="subst">&#123;path&#125;</span><span class="subst">&#123;bundle&#125;</span><span class="subst">&#123;BUNDLE_MANIFEST_SUFFIX&#125;</span>&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    fileSet.Remove(<span class="string">$&quot;<span class="subst">&#123;path&#125;</span><span class="subst">&#123;PLATFORM&#125;</span>&quot;</span>);</span><br><span class="line">    fileSet.Remove(<span class="string">$&quot;<span class="subst">&#123;path&#125;</span><span class="subst">&#123;PLATFORM&#125;</span><span class="subst">&#123;BUNDLE_MANIFEST_SUFFIX&#125;</span>&quot;</span>);</span><br><span class="line"></span><br><span class="line">    Parallel.ForEach(fileSet, ParallelOptions, File.Delete);</span><br><span class="line"></span><br><span class="line">    EditorUtility.DisplayProgressBar(<span class="string">$&quot;<span class="subst">&#123;<span class="keyword">nameof</span>(ClearAssetBundle)&#125;</span>&quot;</span>, <span class="string">&quot;清除多余的AssetBundle文件&quot;</span>, max);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>最后，把描述文件打包bundle</p>
-<figure class="highlight c#"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">BuildManifest</span>()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">float</span> min = ms_BuildManifestProgress.x;</span><br><span class="line">    <span class="built_in">float</span> max = ms_BuildManifestProgress.y;</span><br><span class="line"></span><br><span class="line">    EditorUtility.DisplayProgressBar(<span class="string">$&quot;<span class="subst">&#123;<span class="keyword">nameof</span>(BuildManifest)&#125;</span>&quot;</span>, <span class="string">&quot;将Manifest打包成AssetBundle&quot;</span>, min);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!Directory.Exists(TempBuildPath))</span><br><span class="line">        Directory.CreateDirectory(TempBuildPath);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">string</span> prefix = Application.dataPath.Replace(<span class="string">&quot;/Assets&quot;</span>, <span class="string">&quot;/&quot;</span>).Replace(<span class="string">&quot;\\&quot;</span>, <span class="string">&quot;/&quot;</span>);</span><br><span class="line"></span><br><span class="line">    AssetBundleBuild manifest = <span class="keyword">new</span> AssetBundleBuild();</span><br><span class="line">    manifest.assetBundleName = <span class="string">$&quot;<span class="subst">&#123;MANIFEST&#125;</span><span class="subst">&#123;BUNDLE_SUFFIX&#125;</span>&quot;</span>;</span><br><span class="line">    manifest.assetNames = <span class="keyword">new</span> <span class="built_in">string</span>[<span class="number">3</span>]</span><br><span class="line">    &#123;</span><br><span class="line">        ResourcePath_Binary.Replace(prefix,<span class="string">&quot;&quot;</span>),</span><br><span class="line">        BundlePath_Binary.Replace(prefix,<span class="string">&quot;&quot;</span>),</span><br><span class="line">        DependencyPath_Binary.Replace(prefix,<span class="string">&quot;&quot;</span>),</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    EditorUtility.DisplayProgressBar(<span class="string">$&quot;<span class="subst">&#123;<span class="keyword">nameof</span>(BuildManifest)&#125;</span>&quot;</span>, <span class="string">&quot;将Manifest打包成AssetBundle&quot;</span>, min + (max - min) * <span class="number">0.5f</span>);</span><br><span class="line"></span><br><span class="line">    AssetBundleManifest assetBundleManifest = BuildPipeline.BuildAssetBundles(TempBuildPath, <span class="keyword">new</span> AssetBundleBuild[] &#123; manifest &#125;, BuildAssetBundleOptions, EditorUserBuildSettings.activeBuildTarget);</span><br><span class="line"></span><br><span class="line">    <span class="comment">//把文件copy到build目录</span></span><br><span class="line">    <span class="keyword">if</span> (assetBundleManifest)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">string</span> manifestFile = <span class="string">$&quot;<span class="subst">&#123;TempBuildPath&#125;</span>/<span class="subst">&#123;MANIFEST&#125;</span><span class="subst">&#123;BUNDLE_SUFFIX&#125;</span>&quot;</span>;</span><br><span class="line">        <span class="built_in">string</span> target = <span class="string">$&quot;<span class="subst">&#123;buildPath&#125;</span>/<span class="subst">&#123;MANIFEST&#125;</span><span class="subst">&#123;BUNDLE_SUFFIX&#125;</span>&quot;</span>;</span><br><span class="line">        <span class="keyword">if</span> (File.Exists(manifestFile))</span><br><span class="line">        &#123;</span><br><span class="line">            File.Copy(manifestFile, target);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//删除临时目录</span></span><br><span class="line">    <span class="keyword">if</span> (Directory.Exists(TempBuildPath))</span><br><span class="line">        Directory.Delete(TempBuildPath, <span class="literal">true</span>);</span><br><span class="line"></span><br><span class="line">    EditorUtility.DisplayProgressBar(<span class="string">$&quot;<span class="subst">&#123;<span class="keyword">nameof</span>(BuildManifest)&#125;</span>&quot;</span>, <span class="string">&quot;将Manifest打包成AssetBundle&quot;</span>, max);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>把buildsetting里的获取BundleName的函数补一下，现在就已经能跑了，会在项目外面生成几个.ab的文件，那些就是打包的文件。</p>
-<p>接着要考虑怎么加载的问题，写在Demo下的Test_Callback里</p>
-<p>主要是这个函数，剩下都是找文件名和拼接字符串的</p>
-<figure class="highlight c#"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">Initialize</span>()</span></span><br><span class="line">&#123;</span><br><span class="line">    ResourceManager.instance.LoadWithCallback(<span class="string">&quot;Assets/AssetBundle/UI/UIRoot.prefab&quot;</span>, <span class="literal">true</span>, uiRootResource =&gt;</span><br><span class="line">    &#123;</span><br><span class="line">        uiRootResource.Instantiate();</span><br><span class="line"></span><br><span class="line">        Transform uiParent = GameObject.Find(<span class="string">&quot;Canvas&quot;</span>).transform;</span><br><span class="line"></span><br><span class="line">        ResourceManager.instance.LoadWithCallback(<span class="string">&quot;Assets/AssetBundle/UI/TestUI.prefab&quot;</span>, <span class="literal">true</span>, testUIResource =&gt;</span><br><span class="line">        &#123;</span><br><span class="line">            testUIResource.Instantiate(uiParent, <span class="literal">false</span>);</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>要达成加载的目的，也就引出了下一个函数，就是我们需要一个ResourceManager来管理这些加载项，在Core里的Resource下，里面有ResourceManager</p>
-<p>代码太长不贴了，大概就是读取资源信息，读取bundle信息，读取资源依赖信息，加载这些信息，和最后释放这些信息</p>
-<p>bundle加载，在Bundle文件夹下，同步异步加载资源，Demo里有个Test_Callback，会调用加载</p>
-<p>在lateupdate里写卸载函数时要注意，不断轮询确保及时卸载不用的Ab</p>
-<figure class="highlight c#"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">LateUpdate</span>()</span></span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">if</span> (m_NeedUnloadList.Count == <span class="number">0</span>)</span><br><span class="line">                <span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">while</span> (m_NeedUnloadList.Count &gt; <span class="number">0</span>)</span><br><span class="line">            &#123;</span><br><span class="line">                ABundle bundle = m_NeedUnloadList.First.Value;</span><br><span class="line">                m_NeedUnloadList.RemoveFirst();</span><br><span class="line">                <span class="keyword">if</span> (bundle == <span class="literal">null</span>)</span><br><span class="line">                    <span class="keyword">continue</span>;</span><br><span class="line"></span><br><span class="line">                m_BundleDic.Remove(bundle.url);</span><br><span class="line"></span><br><span class="line">                <span class="keyword">if</span> (!bundle.done &amp;&amp; bundle <span class="keyword">is</span> BundleAsync)</span><br><span class="line">                &#123;</span><br><span class="line">                    BundleAsync bundleAsync = bundle <span class="keyword">as</span> BundleAsync;</span><br><span class="line">                    <span class="keyword">if</span> (m_AsyncList.Contains(bundleAsync))</span><br><span class="line">                        m_AsyncList.Remove(bundleAsync);</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                bundle.UnLoad();</span><br><span class="line"></span><br><span class="line">                <span class="comment">//依赖引用-1</span></span><br><span class="line">                <span class="keyword">if</span> (bundle.dependencies != <span class="literal">null</span>)</span><br><span class="line">                &#123;</span><br><span class="line">                    <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; bundle.dependencies.Length; i++)</span><br><span class="line">                    &#123;</span><br><span class="line">                        ABundle temp = bundle.dependencies[i];</span><br><span class="line">                        UnLoad(temp);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
-
-<p>同样，在加载的时候，要确保打包没有循环依赖即可</p>
-<figure class="highlight c#"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> ABundle <span class="title">LoadInternal</span>(<span class="params"><span class="built_in">string</span> url, <span class="built_in">bool</span> <span class="keyword">async</span></span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    ABundle bundle;</span><br><span class="line">    <span class="keyword">if</span> (m_BundleDic.TryGetValue(url, <span class="keyword">out</span> bundle))</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (bundle.reference == <span class="number">0</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            m_NeedUnloadList.Remove(bundle);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">//从缓存中取并引用+1</span></span><br><span class="line">        bundle.AddReference();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> bundle;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//创建ab</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">async</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        bundle = <span class="keyword">new</span> BundleAsync();</span><br><span class="line">        bundle.url = url;</span><br><span class="line">        m_AsyncList.Add(bundle <span class="keyword">as</span> ABundleAsync);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        bundle = <span class="keyword">new</span> Bundle();</span><br><span class="line">        bundle.url = url;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    m_BundleDic.Add(url, bundle);</span><br><span class="line"></span><br><span class="line">    <span class="comment">//加载依赖</span></span><br><span class="line">    <span class="built_in">string</span>[] dependencies = m_AssetBundleManifest.GetDirectDependencies(url);</span><br><span class="line">    <span class="keyword">if</span> (dependencies.Length &gt; <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        bundle.dependencies = <span class="keyword">new</span> ABundle[dependencies.Length];</span><br><span class="line">        <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; dependencies.Length; i++)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="built_in">string</span> dependencyUrl = dependencies[i];</span><br><span class="line">            ABundle dependencyBundle = LoadInternal(dependencyUrl, <span class="keyword">async</span>);</span><br><span class="line">            bundle.dependencies[i] = dependencyBundle;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    bundle.AddReference();</span><br><span class="line"></span><br><span class="line">    bundle.Load();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> bundle;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
 ]]></content>
       <categories>
         <category>Unity</category>
@@ -781,6 +638,21 @@
       </tags>
   </entry>
   <entry>
+    <title>生成在线URL</title>
+    <url>/2024/02/27/picture-URL/</url>
+    <content><![CDATA[<h1 id="本地图片生成在线URL"><a href="#本地图片生成在线URL" class="headerlink" title="本地图片生成在线URL"></a>本地图片生成在线URL</h1><p>方法就是用图床，找个在线图床网站，上传图片<span id="more"></span></p>
+<p>可用网址：<a href="https://sm.ms/">https://sm.ms/</a></p>
+<p>注册，上传图片，把网站给的Image URL复制下来就行</p>
+<h1 id="PDF生成-URL"><a href="#PDF生成-URL" class="headerlink" title="PDF生成 URL"></a>PDF生成 URL</h1><p>方法类似，找个pdf url工具，上传，生成</p>
+]]></content>
+      <categories>
+        <category>Web</category>
+      </categories>
+      <tags>
+        <tag>URL</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>XLua热更新</title>
     <url>/2024/07/20/XLua%E7%83%AD%E6%9B%B4%E6%96%B0/</url>
     <content><![CDATA[<h1 id="XLua热更新"><a href="#XLua热更新" class="headerlink" title="XLua热更新"></a>XLua热更新</h1><h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>Xlua热更新实战，用来熟悉xlua服务器与客户端交互</p>
@@ -851,6 +723,190 @@
       </categories>
       <tags>
         <tag>XLua</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>系统代理设置</title>
+    <url>/2024/02/27/proxy-setting/</url>
+    <content><![CDATA[<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>在git同步的时候，不是连不上github,就是连接超时，贼不习惯。</p>
+<p>网上搜了一圈乱七八糟的解决方案，很多都是要改源文件的，感觉根本不用那么麻烦就自己摸索了一下，简便的设置方法<span id="more"></span></p>
+<p>首先，代理设置全局(global)，全局，全局，重要的事说三遍。因为这基本解决了win上的git问题，但也有例外。</p>
+<p>首先，修改git的proxy和修改terminal的proxy不一样，分情况说：</p>
+<h2 id="Win"><a href="#Win" class="headerlink" title="Win"></a>Win</h2><h3 id="cmd-powershell修改proxy："><a href="#cmd-powershell修改proxy：" class="headerlink" title="cmd, powershell修改proxy："></a>cmd, powershell修改proxy：</h3><p>cmd：打开输入set http_proxy&#x3D;<a href="http://127.0.0.1:7890/">http://127.0.0.1:7890</a> 和 set https_proxy&#x3D;<a href="http://127.0.0.1:7890，7890是你的代理端口（proxy">http://127.0.0.1:7890，7890是你的代理端口（proxy</a> port），自己替换。</p>
+<p>Powershell：输入 $Env:http_proxy&#x3D;”<a href="http://127.0.0.1:7890/">http://127.0.0.1:7890</a>“ 和 $Env:https_proxy&#x3D;”<a href="http://127.0.0.1:7890"，代理端口同上。">http://127.0.0.1:7890&quot;，代理端口同上。</a></p>
+<p>clashX有一键复制，点port后的那个命令行小按键。但是是一次性的，每次重开窗口都要再打一遍，但我觉得比改源文件好，因为会影响电脑正常使用，还要去改回来。</p>
+<h3 id="Vscode-JetBrains"><a href="#Vscode-JetBrains" class="headerlink" title="Vscode &amp; JetBrains"></a>Vscode &amp; JetBrains</h3><p>设置CMD和prompt没用，vscode里打开终端设置也没用，但是有个更便捷的方法：</p>
+<p>文件-首选项-设置-应用程序-代理服务器-proxy，代理地址打进去。</p>
+<p>JetBrains基本跟vs一样，找http proxy设置，往里一输就完了。</p>
+<h2 id="Mac"><a href="#Mac" class="headerlink" title="Mac"></a>Mac</h2><p>首先还是全局，但mac是伪全局。</p>
+<h3 id="终端："><a href="#终端：" class="headerlink" title="终端："></a>终端：</h3><p>猫猫头右键，有个终端代理模式（之类的)</p>
+<p>输入terminal： </p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">export https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_proxy=socks5://127.0.0.1:7890</span><br></pre></td></tr></table></figure>
+
+<p>设置完了，什么brew，nvm，npm全能跑，不香吗。</p>
+<p>其他代理：同win cmd的方法，务必开全局，然后复制终端代理的代码。</p>
+<h2 id="直接修改git-proxy："><a href="#直接修改git-proxy：" class="headerlink" title="直接修改git proxy："></a>直接修改git proxy：</h2><p>各系统通用，但仅仅让git跑起来，例如mac上的brew，conda之类的，如果被墙了照样没用</p>
+<p>终端输入：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">git config --global https.proxy http://127.0.0.1:7890</span><br><span class="line">git config --global https.proxy https://127.0.0.1:7890</span><br></pre></td></tr></table></figure>
+
+<p>（ps：实在不行，github desktop解决一切问题，代理不开全局都能活）</p>
+]]></content>
+      <categories>
+        <category>Setup</category>
+      </categories>
+      <tags>
+        <tag>Proxy</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Unity Playground</title>
+    <url>/2024/03/09/unity-Playground/</url>
+    <content><![CDATA[<h1 id="Unity-练手第一个游戏"><a href="#Unity-练手第一个游戏" class="headerlink" title="Unity 练手第一个游戏"></a>Unity 练手第一个游戏</h1><p>Unity2D的初识项目，新手入门第一次项目体验。<span id="more"></span></p>
+<p>Unity官方网址： <a href="https://learn.unity.com/project/unity-playground">https://learn.unity.com/project/unity-playground</a></p>
+<p>主要流程还是要看官方教程，作为熟悉unity第一个上手项目，官方手把手教程，按步骤一步步来</p>
+<p>资源载入： <a href="https://assetstore.unity.com/packages/templates/tutorials/unity-learn-playground-urp-109917">https://assetstore.unity.com/packages/templates/tutorials/unity-learn-playground-urp-109917</a></p>
+<p>按上一篇教程，创建2D空模版，package manager import</p>
+<p>这个教程里主要是2D项目的入门介绍，脚本都已经写好了，主要是熟悉控件和unity2D的使用</p>
+<p>里面还有很多初级的游戏模版，可以直接运行，控件脚本可以打开看一看。</p>
+<p>Playground的项目里还有好几个example，可以都运行一下，启发启发灵感。</p>
+]]></content>
+      <categories>
+        <category>Unity</category>
+      </categories>
+      <tags>
+        <tag>U3D</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Unity，启动!</title>
+    <url>/2024/03/06/unity-begin/</url>
+    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><blockquote>
+<p>万事开头难，中间难，结尾难</p>
+<p>世上无难事，只要肯放弃</p>
+</blockquote>
+<p>本篇记录unity入门和常用资源内容链接</p>
+<p>官方教程内容是最好的内容！<span id="more"></span></p>
+<h2 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h2><ol>
+<li><p>C# 环境配置</p>
+<p>win专属：visual studio一步到位，选C# 桌面应用，unity扩展这两项即可。</p>
+<p>或者：</p>
+<p>下载dotnet（官网或者brew），vscode扩展，rider。</p>
+<p>mac要多下一个mono框架</p>
+</li>
+<li><p>unity配置</p>
+<p>官网下载unity hub，hub安装选择unity版本</p>
+<p>建议不要默认，进去自选，最小安装，以后可以加配（加了不能删，什么鬼啊！）</p>
+<p>设置unity使用的编辑器，默认win和mac都是vs（mac的vs都快GG了）</p>
+<p>编辑器的unity好用插件，按需求来</p>
+</li>
+</ol>
+<h2 id="官方资源"><a href="#官方资源" class="headerlink" title="官方资源"></a>官方资源</h2><p>建议看英语，并不是中文不好看，而是中文文档是机翻！有些甚至不翻！（都有GPT了，有没有搞错啊）</p>
+<p>官网：<a href="https://unity.com/">https://unity.com</a></p>
+<p>文档：<a href="https://docs.unity.com/">https://docs.unity.com</a></p>
+<p>Unity Learn：<a href="https://learn.unity.com/">https://learn.unity.com</a></p>
+<p>Assert Store：<a href="https://assetstore.unity.com/">https://assetstore.unity.com</a></p>
+<blockquote>
+<p>先在assert store里import，然后hub创建空项目，package manager导入</p>
+</blockquote>
+<h2 id="软件界面"><a href="#软件界面" class="headerlink" title="软件界面"></a>软件界面</h2><p>软件界面各个按键是操作的基本，看官方文档吧</p>
+<p>顺便b站和github都有教程，边做边熟悉，关键是一些画面快速操作的快捷键</p>
+]]></content>
+      <categories>
+        <category>Unity</category>
+      </categories>
+      <tags>
+        <tag>U3D</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>搭建个人博客</title>
+    <url>/2024/02/27/%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2/</url>
+    <content><![CDATA[<h1 id="个人博客搭建指北"><a href="#个人博客搭建指北" class="headerlink" title="个人博客搭建指北"></a>个人博客搭建指北</h1><p>搭建个人静态博客，Hexo+Next+Github Pages。</p>
+<p>平台：macos</p>
+<p>本地：nvm，JS一套，Hexo，Next主题</p>
+<p>网站：免费github pages，或自己搞个云服务<span id="more"></span></p>
+<h1 id="本地配置"><a href="#本地配置" class="headerlink" title="本地配置"></a>本地配置</h1><ol>
+<li><p>Xcode开发工具，带有一些基础环境和git</p>
+</li>
+<li><p>安装本地NodeJS</p>
+<ol>
+<li><p>这一步有坑，不要brew安装或者官网的sdk安装，会报错。在安装 Hexo 的过程中出现 <code>EACCES</code> 权限错误，这里不要看网上的建议，<strong>不要</strong> 使用 root、sudo 等方法覆盖权限。会报更大的错！</p>
+</li>
+<li><p>使用nvm或者nvs部署，这里用的是nvm。</p>
+<p>链接：<a href="https://github.com/nvm-sh/nvm">https://github.com/nvm-sh/nvm</a></p>
+<p>terminal命令：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh</span><br></pre></td></tr></table></figure>
+
+<p>下完验证一下</p>
+<p><code>nvm -v</code></p>
+<p>如果没有，去配一下环境，别看网上一堆，要找mac zsh添加环境</p>
+</li>
+<li><p>nvm安装node和npm</p>
+<p><code>nvm install node</code> 可以指定版本，看一下nvm help</p>
+<p>装完验证一下，不行加环境变量</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">node -v</span><br><span class="line">npm -v</span><br></pre></td></tr></table></figure></li>
+</ol>
+</li>
+<li><p>安装Hexo</p>
+<p>精简版</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">npm install -g hexo-cli</span><br></pre></td></tr></table></figure>
+
+<p>也可以用完整版安装指令，装完验证，要指定版本的话记得看一下版本对应</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo -v</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>建站，创立项目文件夹</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo init &lt;folder&gt;</span><br><span class="line">cd &lt;folder&gt;</span><br><span class="line">npm install</span><br></pre></td></tr></table></figure>
+
+<p>可以自定义路径，现在文件夹在主目录下，可以查看</p>
+</li>
+<li><p>在文件夹安装Next主题</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd your-hexo-site</span><br><span class="line">git clone https://github.com/iissnan/hexo-theme-next themes/next</span><br></pre></td></tr></table></figure>
+
+<p>大功告成</p>
+</li>
+</ol>
+<h1 id="Hexo"><a href="#Hexo" class="headerlink" title="Hexo"></a>Hexo</h1><p>没有什么，是比官方文档更好使的教程！</p>
+<p>中文：<a href="https://hexo.io/zh-cn/docs/">https://hexo.io/zh-cn/docs/</a> 英语：<a href="https://hexo.io/docs/index.html">https://hexo.io/docs/index.html</a></p>
+<p>创建文章，编辑source下的markdown文件。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo new [layout] &lt;title&gt;</span><br></pre></td></tr></table></figure>
+
+<p>生成</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo g</span><br></pre></td></tr></table></figure>
+
+<p>服务器预览</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo s</span><br></pre></td></tr></table></figure>
+
+<p>发布</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo d</span><br></pre></td></tr></table></figure>
+
+<h2 id="部署github"><a href="#部署github" class="headerlink" title="部署github"></a>部署github</h2><ol>
+<li><p>安装 <a href="https://github.com/hexojs/hexo-deployer-git">hexo-deployer-git</a>。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">npm install hexo-deployer-git --save</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>修改主config.yml配置</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">deploy:</span><br><span class="line">  type: git</span><br><span class="line">  repo: &lt;repository url&gt; #https://bitbucket.org/JohnSmith/johnsmith.bitbucket.io</span><br><span class="line">  branch: [branch]</span><br><span class="line">  message: [message]</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>生成站点文件并推送至远程库。执行 <code>hexo clean &amp;&amp; hexo deploy</code>。注意，如果是从站，config里把前面的网站URL设置一下</p>
+</li>
+</ol>
+<p><em><strong>GitHub Pages 源存储库的建议限制为1 GB。 有关详细信息，请参阅“关于GitHub 上的大文件” 发布的GitHub Pages 站点不得超过1 GB。 如果花费的时间超过10 分钟，GitHub Pages 部署将超时。</strong></em></p>
+<p><em><strong>个人主页只能创建一个，项目主页可以创建多个</strong></em></p>
+<h1 id="Next主题"><a href="#Next主题" class="headerlink" title="Next主题"></a>Next主题</h1><p>同给出官方文档链接：</p>
+<p><a href="https://theme-next.iissnan.com/">https://theme-next.iissnan.com/</a></p>
+<p>似乎是旧版的，新版的我只找到更新日志，但是旧版大多通用</p>
+<p><a href="https://theme-next.org/index.html">https://theme-next.org/index.html</a></p>
+<p>在config里的修改theme，即可启用主题</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">theme: next</span><br></pre></td></tr></table></figure>
+
+<p>剩下的自定义功能还是去看官方文档吧</p>
+<hr>
+<p>（ps: 第一次用typora写完一个文档，感觉好难用啊，有些本来要用上的html语法都识别不出来，:(，还有格式问题，不如直接vscode编辑，大呼上当)</p>
+]]></content>
+      <categories>
+        <category>Web</category>
+      </categories>
+      <tags>
+        <tag>Blog</tag>
       </tags>
   </entry>
 </search>
