@@ -20,6 +20,41 @@
       </tags>
   </entry>
   <entry>
+    <title>CreatorKit-FPS</title>
+    <url>/2024/03/11/CreatorKit-FPS/</url>
+    <content><![CDATA[<h1 id="Unity3D项目初识"><a href="#Unity3D项目初识" class="headerlink" title="Unity3D项目初识"></a>Unity3D项目初识</h1><p>与Playground类似，本项目作为Unity 3D项目的入门，是官方教程的一部分<span id="more"></span></p>
+<p>官方教程链接：<a href="https://learn.unity.com/project/creator-kit-fps">https://learn.unity.com/project/creator-kit-fps</a></p>
+<p>项目载入地址：<a href="https://assetstore.unity.com/packages/templates/tutorials/unity-learn-creator-kit-fps-urp-149310">https://assetstore.unity.com/packages/templates/tutorials/unity-learn-creator-kit-fps-urp-149310</a></p>
+<p>创立一个3D空模版，直接assert store import就能开始了</p>
+<p>是一个初级的3D项目，让我们熟悉unity3D编辑器的应用，和控件的使用</p>
+<p>跟随教程一步步往下就行，主要体验过程</p>
+]]></content>
+      <categories>
+        <category>Unity</category>
+      </categories>
+      <tags>
+        <tag>U3D</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>CreatorKit Beginner Code</title>
+    <url>/2024/03/12/CreatorKit_BeginnerCode/</url>
+    <content><![CDATA[<h1 id="Unity脚本设计入门"><a href="#Unity脚本设计入门" class="headerlink" title="Unity脚本设计入门"></a>Unity脚本设计入门</h1><p>本篇是unity游戏中，C#脚本编辑的初体验<span id="more"></span></p>
+<p>依旧是跟随官方教程</p>
+<p>链接：<a href="https://learn.unity.com/project/creator-kit-beginner-code">https://learn.unity.com/project/creator-kit-beginner-code</a></p>
+<p>导入：<a href="https://assetstore.unity.com/packages/templates/tutorials/creator-kit-beginner-code-urp-151986">https://assetstore.unity.com/packages/templates/tutorials/creator-kit-beginner-code-urp-151986</a></p>
+<p>记得创建3D URP模版，不然运行有bug</p>
+<p>基本就是C#的标准结构，space，class，function，然后套官方函数，比如读属性，或者位置角度之类的，很简单。</p>
+<p>游戏挺有意思的，arpg，可以自己试着加一点获胜条件啥的玩一玩</p>
+]]></content>
+      <categories>
+        <category>Unity</category>
+      </categories>
+      <tags>
+        <tag>U3D</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Unity AssetBundle实战</title>
     <url>/2024/06/03/AssetBundle%E5%AE%9E%E6%88%98/</url>
     <content><![CDATA[<h1 id="AssetBundle实战（AB打包）"><a href="#AssetBundle实战（AB打包）" class="headerlink" title="AssetBundle实战（AB打包）"></a>AssetBundle实战（AB打包）</h1><h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>AssetBundle打包实战项目，主要是AssetBundle怎么打包的，怎么加载以及卸载的过场和原理，随便倒了个资源包进来，进行实操。</p>
@@ -86,41 +121,6 @@
 <p>同样，在加载的时候，要确保打包没有循环依赖即可</p>
 <figure class="highlight c#"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> ABundle <span class="title">LoadInternal</span>(<span class="params"><span class="built_in">string</span> url, <span class="built_in">bool</span> <span class="keyword">async</span></span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    ABundle bundle;</span><br><span class="line">    <span class="keyword">if</span> (m_BundleDic.TryGetValue(url, <span class="keyword">out</span> bundle))</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (bundle.reference == <span class="number">0</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            m_NeedUnloadList.Remove(bundle);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">//从缓存中取并引用+1</span></span><br><span class="line">        bundle.AddReference();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> bundle;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//创建ab</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">async</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        bundle = <span class="keyword">new</span> BundleAsync();</span><br><span class="line">        bundle.url = url;</span><br><span class="line">        m_AsyncList.Add(bundle <span class="keyword">as</span> ABundleAsync);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        bundle = <span class="keyword">new</span> Bundle();</span><br><span class="line">        bundle.url = url;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    m_BundleDic.Add(url, bundle);</span><br><span class="line"></span><br><span class="line">    <span class="comment">//加载依赖</span></span><br><span class="line">    <span class="built_in">string</span>[] dependencies = m_AssetBundleManifest.GetDirectDependencies(url);</span><br><span class="line">    <span class="keyword">if</span> (dependencies.Length &gt; <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        bundle.dependencies = <span class="keyword">new</span> ABundle[dependencies.Length];</span><br><span class="line">        <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; dependencies.Length; i++)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="built_in">string</span> dependencyUrl = dependencies[i];</span><br><span class="line">            ABundle dependencyBundle = LoadInternal(dependencyUrl, <span class="keyword">async</span>);</span><br><span class="line">            bundle.dependencies[i] = dependencyBundle;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    bundle.AddReference();</span><br><span class="line"></span><br><span class="line">    bundle.Load();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> bundle;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-]]></content>
-      <categories>
-        <category>Unity</category>
-      </categories>
-      <tags>
-        <tag>U3D</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>CreatorKit-FPS</title>
-    <url>/2024/03/11/CreatorKit-FPS/</url>
-    <content><![CDATA[<h1 id="Unity3D项目初识"><a href="#Unity3D项目初识" class="headerlink" title="Unity3D项目初识"></a>Unity3D项目初识</h1><p>与Playground类似，本项目作为Unity 3D项目的入门，是官方教程的一部分<span id="more"></span></p>
-<p>官方教程链接：<a href="https://learn.unity.com/project/creator-kit-fps">https://learn.unity.com/project/creator-kit-fps</a></p>
-<p>项目载入地址：<a href="https://assetstore.unity.com/packages/templates/tutorials/unity-learn-creator-kit-fps-urp-149310">https://assetstore.unity.com/packages/templates/tutorials/unity-learn-creator-kit-fps-urp-149310</a></p>
-<p>创立一个3D空模版，直接assert store import就能开始了</p>
-<p>是一个初级的3D项目，让我们熟悉unity3D编辑器的应用，和控件的使用</p>
-<p>跟随教程一步步往下就行，主要体验过程</p>
-]]></content>
-      <categories>
-        <category>Unity</category>
-      </categories>
-      <tags>
-        <tag>U3D</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>CreatorKit Beginner Code</title>
-    <url>/2024/03/12/CreatorKit_BeginnerCode/</url>
-    <content><![CDATA[<h1 id="Unity脚本设计入门"><a href="#Unity脚本设计入门" class="headerlink" title="Unity脚本设计入门"></a>Unity脚本设计入门</h1><p>本篇是unity游戏中，C#脚本编辑的初体验<span id="more"></span></p>
-<p>依旧是跟随官方教程</p>
-<p>链接：<a href="https://learn.unity.com/project/creator-kit-beginner-code">https://learn.unity.com/project/creator-kit-beginner-code</a></p>
-<p>导入：<a href="https://assetstore.unity.com/packages/templates/tutorials/creator-kit-beginner-code-urp-151986">https://assetstore.unity.com/packages/templates/tutorials/creator-kit-beginner-code-urp-151986</a></p>
-<p>记得创建3D URP模版，不然运行有bug</p>
-<p>基本就是C#的标准结构，space，class，function，然后套官方函数，比如读属性，或者位置角度之类的，很简单。</p>
-<p>游戏挺有意思的，arpg，可以自己试着加一点获胜条件啥的玩一玩</p>
 ]]></content>
       <categories>
         <category>Unity</category>
@@ -638,21 +638,6 @@
       </tags>
   </entry>
   <entry>
-    <title>生成在线URL</title>
-    <url>/2024/02/27/picture-URL/</url>
-    <content><![CDATA[<h1 id="本地图片生成在线URL"><a href="#本地图片生成在线URL" class="headerlink" title="本地图片生成在线URL"></a>本地图片生成在线URL</h1><p>方法就是用图床，找个在线图床网站，上传图片<span id="more"></span></p>
-<p>可用网址：<a href="https://sm.ms/">https://sm.ms/</a></p>
-<p>注册，上传图片，把网站给的Image URL复制下来就行</p>
-<h1 id="PDF生成-URL"><a href="#PDF生成-URL" class="headerlink" title="PDF生成 URL"></a>PDF生成 URL</h1><p>方法类似，找个pdf url工具，上传，生成</p>
-]]></content>
-      <categories>
-        <category>Web</category>
-      </categories>
-      <tags>
-        <tag>URL</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>XLua热更新</title>
     <url>/2024/07/20/XLua%E7%83%AD%E6%9B%B4%E6%96%B0/</url>
     <content><![CDATA[<h1 id="XLua热更新"><a href="#XLua热更新" class="headerlink" title="XLua热更新"></a>XLua热更新</h1><h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>Xlua热更新实战，用来熟悉xlua服务器与客户端交互</p>
@@ -723,6 +708,21 @@
       </categories>
       <tags>
         <tag>XLua</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>生成在线URL</title>
+    <url>/2024/02/27/picture-URL/</url>
+    <content><![CDATA[<h1 id="本地图片生成在线URL"><a href="#本地图片生成在线URL" class="headerlink" title="本地图片生成在线URL"></a>本地图片生成在线URL</h1><p>方法就是用图床，找个在线图床网站，上传图片<span id="more"></span></p>
+<p>可用网址：<a href="https://sm.ms/">https://sm.ms/</a></p>
+<p>注册，上传图片，把网站给的Image URL复制下来就行</p>
+<h1 id="PDF生成-URL"><a href="#PDF生成-URL" class="headerlink" title="PDF生成 URL"></a>PDF生成 URL</h1><p>方法类似，找个pdf url工具，上传，生成</p>
+]]></content>
+      <categories>
+        <category>Web</category>
+      </categories>
+      <tags>
+        <tag>URL</tag>
       </tags>
   </entry>
   <entry>
