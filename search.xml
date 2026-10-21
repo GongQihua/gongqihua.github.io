@@ -20,38 +20,505 @@
       </tags>
   </entry>
   <entry>
-    <title>CreatorKit-FPS</title>
-    <url>/2024/03/11/CreatorKit-FPS/</url>
-    <content><![CDATA[<h1 id="Unity3D项目初识"><a href="#Unity3D项目初识" class="headerlink" title="Unity3D项目初识"></a>Unity3D项目初识</h1><p>与Playground类似，本项目作为Unity 3D项目的入门，是官方教程的一部分<span id="more"></span></p>
-<p>官方教程链接：<a href="https://learn.unity.com/project/creator-kit-fps">https://learn.unity.com/project/creator-kit-fps</a></p>
-<p>项目载入地址：<a href="https://assetstore.unity.com/packages/templates/tutorials/unity-learn-creator-kit-fps-urp-149310">https://assetstore.unity.com/packages/templates/tutorials/unity-learn-creator-kit-fps-urp-149310</a></p>
-<p>创立一个3D空模版，直接assert store import就能开始了</p>
-<p>是一个初级的3D项目，让我们熟悉unity3D编辑器的应用，和控件的使用</p>
-<p>跟随教程一步步往下就行，主要体验过程</p>
+    <title>Agent热点追踪项目</title>
+    <url>/2026/10/21/Agent%E7%83%AD%E7%82%B9%E8%BF%BD%E8%B8%AA%E9%A1%B9%E7%9B%AE/</url>
+    <content><![CDATA[<h1 id="Agent热点追踪项目"><a href="#Agent热点追踪项目" class="headerlink" title="Agent热点追踪项目"></a>Agent热点追踪项目</h1><h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>原项目是写在公司自有平台上的，平台的MEP项目，底层类似一个后端服务给你写好的，你直接在此基础上写进程和线程就行。ai api调用也是公司内部的，glm5.2，部分mcp也是改写的，恕在此无法展示。</p>
+<p>但总思路是一致的，用agent的mcp工具去抓热点新闻，再调用api去判断新闻内容，给内容打分，给热度打分，最后再从新闻标题中挑选热词，这部分全部交给api，最后记录热点新闻和热词两部分内容。</p>
+<p>这里上传github的项目是重做的，带着整个前后端的，全程由牛逼的codex生成。</p>
+<p>项目链接：<a href="https://github.com/GongQihua/hotspot_monitor">Agent热点追踪项目</a><span id="more"></span></p>
+<h1 id="前期准备"><a href="#前期准备" class="headerlink" title="前期准备"></a>前期准备</h1><p>部分api和工具要提前准备：</p>
+<ol>
+<li>OpenRouter API：agent需要调用的api</li>
+<li>twitter API：抓取twitter新闻用的，也要付费</li>
+<li>Firecrawl：爬虫mcp</li>
+<li>Context7：读最新文档用的mcp，调用接口和api用</li>
+<li>UI UX Pro Max：美化前端的skill</li>
+<li>Skill Creator：总结生成skill用</li>
+</ol>
+<h2 id="Vibe-coding"><a href="#Vibe-coding" class="headerlink" title="Vibe-coding"></a>Vibe-coding</h2><p>给codex说需求，ai给出的方案：</p>
+<p>热点监控工具-设计方案</p>
+<table>
+<thead>
+<tr>
+<th>层级</th>
+<th>技术</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>前端</td>
+<td>React + Vite + TailwindCSS</td>
+<td>快速开发、响位式、独特 UI</td>
+</tr>
+<tr>
+<td>后端</td>
+<td>Node.js + Express</td>
+<td>轻量、快速</td>
+</tr>
+<tr>
+<td>数据存储</td>
+<td>Prisma + SQLite</td>
+<td>轻量级、无需额外配置</td>
+</tr>
+</tbody></table>
+<p>新闻抓取的api来源：twitter api，bing search api，微博&#x2F;b站 api</p>
+<p>然后ai会有一堆方案确认，化身yes工程师照着一个个回答和allow就完事了。记得让ai沉淀markdown文档。</p>
+<p>初版功能验收清单：</p>
+<ol>
+<li>﻿﻿﻿仪表盘 - 显示热点统计和最新热点列表</li>
+<li>﻿﻿﻿关键词管理-添加&#x2F;删除&#x2F;启用&#x2F;禁用监控关键词</li>
+<li>﻿﻿搜索-手动搜索热点内容</li>
+<li>﻿﻿﻿立即检查 - 手动触发热点抓取</li>
+<li>﻿﻿通知 -右上角通知铃铛，实时推送新热点</li>
+</ol>
+<p>这里记得.env文件不要直接用，创建一个测试env。出版功能验证后，记得git一下代码再做后续。</p>
+<p>ai问新闻标题审核流程，跟他说的时候有条理一点：</p>
+<ol>
+<li>﻿﻿﻿真实性判断：Al判断这条信息是否真实可信（过滤标题党、假消息）</li>
+<li>﻿﻿相关性评分：Al给出 0-100 分相关性评分，表示与监控关键词匹配度</li>
+<li>﻿﻿重要性分级：分为 urgent（紧急）、high（高）、medium（中）、low（低）四个等级</li>
+<li>﻿﻿﻿摘要生成：AI自动生成简洁的中文摘要，方便快速阅读</li>
+</ol>
+<p>流程：原始信息→ AI分析→真实性判断→相关性评分→重要性分级→摘要生成</p>
+<p>几乎是一把过了：</p>
+<figure class="highlight markdown"><table><tr><td class="code"><pre><span class="line">hotnews-monitor/</span><br><span class="line">├── server/                 # 后端项目</span><br><span class="line">│   ├── src/</span><br><span class="line">│   │   ├── routes/         # API 路由</span><br><span class="line">│   │   ├── services/       # 业务逻辑（采集、分析、通知等）</span><br><span class="line">│   │   ├── prisma/         # 数据库模型定义</span><br><span class="line">│   │   └── index.ts        # 入口文件</span><br><span class="line">│   ├── .env                # 环境变量（敏感信息）</span><br><span class="line">│   └── package.json</span><br><span class="line">├── client/                 # 前端项目</span><br><span class="line">│   ├── src/</span><br><span class="line">│   │   ├── components/     # React 组件</span><br><span class="line">│   │   ├── pages/          # 页面</span><br><span class="line">│   │   └── App.tsx         # 根组件</span><br><span class="line">│   └── package.json</span><br><span class="line">└── docs/                   # 项目文档</span><br></pre></td></tr></table></figure>
+
+<h2 id="优化1-前端页面"><a href="#优化1-前端页面" class="headerlink" title="优化1: 前端页面"></a>优化1: 前端页面</h2><p>前端页面一打开ai味太冲了，优化一波，可能是由于ai前端祖传的TailwindCSS。</p>
+<p>这里就要用到UI UX Pro Max这个skill了，先让他用contest7好好读最新文档，然后告诉他用高端一点的组件库：Aceternity UI，prompt语句写好约束和思路：</p>
+<ol>
+<li>﻿指定色彩方案：不要让 AI自由发挥，明确告诉它用什么颜色</li>
+<li>﻿﻿﻿使用特定 UI库：比如 Aceternity UI，它有独特视觉风格</li>
+<li>﻿﻿注入情感和场景：告诉 AI你产品是什么调性（科技感、极客风等）</li>
+<li>﻿﻿使用前端美化技能：让 Al参考专业 UI&#x2F;UX 设计规范</li>
+</ol>
+<p>这步优化前记得清一下上下文，省点token。可以反复做炼金看看效果，记得git保存版本。</p>
+<h2 id="优化2-信息获取来源"><a href="#优化2-信息获取来源" class="headerlink" title="优化2: 信息获取来源"></a>优化2: 信息获取来源</h2><p>初始版本只有twitter api 和 bing api，twitter api的来源质量还有点低。</p>
+<p>现在需要：</p>
+<ol>
+<li>强化twitter和bing来源的内容过滤</li>
+<li>增加国内源：微博热搜，b站api</li>
+</ol>
+<p>跟ai讨论一下方案后：</p>
+<table>
+<thead>
+<tr>
+<th>问题 1:Twitter 信息质量过滤</th>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>过滤维度</td>
+<td>建议阈值</td>
+<td>说明</td>
+</tr>
+<tr>
+<td>最低点赞数</td>
+<td>≥ 10</td>
+<td>过滤无人关注的随机帖子</td>
+</tr>
+<tr>
+<td>最低转发数</td>
+<td>≥ 5</td>
+<td>有传播价值的内容</td>
+</tr>
+<tr>
+<td>最低浏览量</td>
+<td>≥ 500</td>
+<td>有一定关注度</td>
+</tr>
+<tr>
+<td>作者粉丝数</td>
+<td>≥ 100</td>
+<td>排除僵尸&#x2F;新号</td>
+</tr>
+<tr>
+<td>认证优先</td>
+<td>蓝V 加权</td>
+<td>可信度更高</td>
+</tr>
+<tr>
+<td>排除回复推文</td>
+<td>过滤reply 类型</td>
+<td>只保留原创推文</td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th>问题2：扩展信息来源</th>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>数据源</td>
+<td>实现方式</td>
+<td>特点</td>
+</tr>
+<tr>
+<td>Bing</td>
+<td>已实现</td>
+<td>稳定，国内可用</td>
+</tr>
+<tr>
+<td>Google</td>
+<td>已实现</td>
+<td>需启用，可能被封</td>
+</tr>
+<tr>
+<td>DuckDuckGo</td>
+<td>新增</td>
+<td>无需 APl，反爬虫弱</td>
+</tr>
+<tr>
+<td>Hacker News</td>
+<td>新增</td>
+<td>Al&#x2F;技术热点专业来源</td>
+</tr>
+<tr>
+<td>Reddit</td>
+<td>新增（可选）</td>
+<td>技术社区讨论</td>
+</tr>
+<tr>
+<td>国内新闻源</td>
+<td>新增</td>
+<td>微博爬虫，b站api</td>
+</tr>
+</tbody></table>
+<p>在新增搜索引擎数据源时，AI使用了 Axios+ Cheerio 的爬虫方案：</p>
+<ul>
+<li>﻿Axios：一个流行 HTTP 请求库，用于发送 GET&#x2F;POST 请求获取网页 HTML</li>
+<li>﻿Cheerio：一个轻量级的 HTML 解析库，提供了类似jQuery API来提取页面元素</li>
+</ul>
+<p>工作流程：</p>
+<p>发送 HTTP 请求获取网页 HTML→ Cheerio解析 HTML→提取搜索结果（标题、链接、描述）→返回结构化数据</p>
+<p>爬虫用来应对微博和搜狗热搜，多轮迭代优化后，效果好很多了。看到ai卡住，反复优化同一个点的时候，记得手动停一停。</p>
+<p>告诉ai，在数据采集阶段，应该尽可能拓宽搜索范围，不要过早过滤。过滤应该分层进行，明确告诉ai最后结果 质量&gt;数量：</p>
+<ol>
+<li>﻿﻿第一层：基础过滤（去重、时间窗口、格式校验）</li>
+<li>﻿﻿﻿第二层：质量过滤（社交指标、作者信誉）</li>
+<li>﻿﻿第三层：AI深度分析（真假识别、相关性评分）</li>
+</ol>
+<p>数据采集（尽量多）→基础过滤（去重、时间）→ AI 深度分析（相关性、真假）→最终展示</p>
+<h2 id="优化3-信息筛选排序"><a href="#优化3-信息筛选排序" class="headerlink" title="优化3: 信息筛选排序"></a>优化3: 信息筛选排序</h2><p>现在前端展示页面是竖直排列，获取到的热点全都堆在一起，不利于人工检索，因此希望能够对帖子进行筛选和排序。</p>
+<p>当系统从 8+ 个信息源采集数据后，一次扫描可能产生几十甚至上百条结果。如果所有内容平铺展示，用户需要逐条阅读才能找到有价值的信息，效率很低。</p>
+<p>选和排序解决了两个核心问题：</p>
+<ol>
+<li>﻿﻿信息过载：通过筛选条件缩小范围，快速找到特定类型信息</li>
+<li>﻿﻿优先级判断：通过排序将最有价值的信息排在最前面</li>
+</ol>
+<p>这在信息系统设计中是一个经典需求，类似于电商网站的商品筛选、新闻客户端内容排序。跟ai讨论后确定方案：</p>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>可选值</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>信息来源</td>
+<td>Twitter &#x2F; Bing &#x2F; HackerNews／搜狗／B站等</td>
+<td>按来源过滤</td>
+</tr>
+<tr>
+<td>重要性</td>
+<td>urgent &#x2F; high &#x2F; medium &#x2F; low</td>
+<td>按 AI判定的重要性级别过滤</td>
+</tr>
+<tr>
+<td>关键词</td>
+<td>用户配置的所有关键词</td>
+<td>按监控关键词过滤</td>
+</tr>
+<tr>
+<td>时间范围</td>
+<td>最近1小时／6小时／24小时／7天／全部</td>
+<td>按发现时间过滤</td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th>排序</th>
+<th>规则</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>热度综合</td>
+<td>综合点赞、转发、浏览量等指标</td>
+<td>社交热度最高的排在前面</td>
+</tr>
+<tr>
+<td>相关性</td>
+<td>按AI评分排序</td>
+<td>与关键词最相关的排在前面</td>
+</tr>
+<tr>
+<td>最新发布</td>
+<td>按帖子原始发布时间排序</td>
+<td>最新发布的排在前面</td>
+</tr>
+<tr>
+<td>最新发现</td>
+<td>按系统抓取时间排序</td>
+<td>最新被系统发现的排在前面</td>
+</tr>
+<tr>
+<td>重要程度</td>
+<td>按AI判定重要性排序</td>
+<td>最紧急重要的排在前面</td>
+</tr>
+</tbody></table>
+<p><strong>筛选排序技术实现</strong></p>
+<p>筛选排序功能涉及前后端协同：</p>
+<p>后端实现要点：</p>
+<ul>
+<li>﻿﻿将筛选参数作为 API查询参数</li>
+<li>﻿使用 Prisma的 where 子句实现筛选</li>
+<li>﻿﻿使用Prisma的 orderBy 子句实现排序</li>
+<li>热度综合排序需要自定义排序逻辑（综合多个指标计算得分）</li>
+</ul>
+<p>前端实现要点：</p>
+<ul>
+<li>﻿﻿使用下拉菜单或标签组件展示选选项</li>
+<li>﻿﻿筛选条件变化时重新请求后端 API</li>
+<li>﻿﻿保持 URL 参数与筛选状态同步（方便分享链接）</li>
+<li>﻿﻿加载状态和空结果的友好提示</li>
+</ul>
+<p>分页实现：</p>
+<ul>
+<li>﻿﻿后端支持 page 和 pagesize 参数</li>
+<li>﻿﻿前端实现“加载更多”按钮</li>
+<li>﻿﻿切换筛选&#x2F;排序条件时重置页码</li>
+</ul>
+<p>可以顺便让ai写一下单元测试，避免不可维护。大功告成</p>
+<h2 id="优化4-优化热点信息展示"><a href="#优化4-优化热点信息展示" class="headerlink" title="优化4: 优化热点信息展示"></a>优化4: 优化热点信息展示</h2><p>目前只是有一部分信息的展示，好的信息展示应该遵循“一眼值不值”原则，用户只需要看一眼，就能判断这条信息是否值得深入阅读。要实现这一点，需要在有限的展示空间内提供 关键决策信息。跟ai讨论了一下，大致需要一下几个点：</p>
+<table>
+<thead>
+<tr>
+<th>决策维度</th>
+<th>对应信息</th>
+<th>为什么重要</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>时效性</td>
+<td>发布时间、抓取时间</td>
+<td>判断信息是否过时</td>
+</tr>
+<tr>
+<td>热度</td>
+<td>点赞、转发、浏览量</td>
+<td>判断信息的关注度</td>
+</tr>
+<tr>
+<td>可信度</td>
+<td>作者信息、认证状态</td>
+<td>判断信息来源是否可信</td>
+</tr>
+<tr>
+<td>相关性</td>
+<td>AI 相关性评分和理由</td>
+<td>判断信息是否与关注话题相关</td>
+</tr>
+<tr>
+<td>原文链接</td>
+<td>一键跳转</td>
+<td>方便深入阅读原始内容</td>
+</tr>
+</tbody></table>
+<p>最后要补充的点：帖子发布时间，系统抓取时间，更多互动数据，Al 相关性理由，作者信息，原始内容展开，真实性标记，热度综合指标，相对时间显示，总结给ai</p>
+<table>
+<thead>
+<tr>
+<th>新功能</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>发布时间</td>
+<td>显示“发布X小时前”，hover显示完整日期</td>
+</tr>
+<tr>
+<td>抓取时间</td>
+<td>显示“抓取X分钟前”，hover显示完整日期</td>
+</tr>
+<tr>
+<td>互动数据</td>
+<td>点赞&#x2F;转发&#x2F;回复&#x2F;评论&#x2F;引用&#x2F;浏览量&#x2F;弹幕，有则显示</td>
+</tr>
+<tr>
+<td>Al 分析理由</td>
+<td>可展开&#x2F;折叠，含”一键展开&#x2F;折叠所有“按钮</td>
+</tr>
+<tr>
+<td>作者信息</td>
+<td>头像、名称、＠用户名、认证标记、粉丝数</td>
+</tr>
+<tr>
+<td>原始内容</td>
+<td>可折叠展开查看原始描述</td>
+</tr>
+<tr>
+<td>AI 摘要标注</td>
+<td>summary 前显示”AI 摘要”标签</td>
+</tr>
+<tr>
+<td>真实性标记</td>
+<td>可疑内容显示红色“可疑”，高相关性显示绿色”可信”</td>
+</tr>
+<tr>
+<td>热度综合指标</td>
+<td>基于多维互动数据的综合热度分（爆&#x2F;热&#x2F;温&#x2F;凉&#x2F;冷）</td>
+</tr>
+<tr>
+<td>相对时间</td>
+<td>所有时间均使用“X小时前“格式，hover 可见完整时间</td>
+</tr>
+</tbody></table>
+<p>包括一些后端改造：</p>
+<ol>
+<li><p>﻿﻿﻿数据采集阶段：在抓取信息时，同时获取互动数据（点赞、转发、浏览量等）</p>
+</li>
+<li><p>﻿﻿数据存储：在 Prisma 数据模型中增加对应字段</p>
+</li>
+<li><p>API响应：在返回给前端数据中包含新增字段</p>
+</li>
+</ol>
+<p>不同信息源提供的互动数据格式不同，需要统一处理。这是更改前后对比</p>
+<table>
+<thead>
+<tr>
+<th>优化前</th>
+<th>优化后</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>只有标题和描述</td>
+<td>标题+描述+发布时间+抓取时间</td>
+</tr>
+<tr>
+<td>只显示点赞数</td>
+<td>点赞、转发、回复、浏览量等完整互动数据</td>
+</tr>
+<tr>
+<td>无分析理由</td>
+<td>AI 相关性分析理由，支持展开&#x2F;折叠</td>
+</tr>
+<tr>
+<td>无作者信息</td>
+<td>作者名称、认证状态</td>
+</tr>
+<tr>
+<td>需要跳转查看详情</td>
+<td>关键信息一目了然</td>
+</tr>
+</tbody></table>
+<h2 id="优化5-AI分析准确度提升-关键词扩展搜索"><a href="#优化5-AI分析准确度提升-关键词扩展搜索" class="headerlink" title="优化5: AI分析准确度提升&amp;关键词扩展搜索"></a>优化5: AI分析准确度提升&amp;关键词扩展搜索</h2><p>又发现问题，AI筛选的内容，跟关键词的关联度不够，至少人看是这样。可能原因是：搜索引擎返回的内容本身就不够相关，关键词过于宽泛或模糊。给 AI的分析提示词不够精确，相关性评分的阈值设置不合理，无法量化分析质量。</p>
+<p>与ai讨论方案后，加入关联性判断和Query Expansion（查询扩展）</p>
+<p>首先关联性判断是因为原Prompt 要求“生成简短摘要”，AI自然只会介绍内容概要，而不会说明“这篇内容跟你搜索的关键词有什么关系”，现更改prompt明确要求。方法是强化prompt规范：</p>
+<ol>
+<li>﻿﻿要求说明关联关系：AI 不仅要给分数，还要解释为什么觉得相关</li>
+<li>﻿﻿﻿增加 keywordMentioned 字段：明确标记内容中是否直接提到了关键词</li>
+<li>﻿﻿区分直接相关和间接相关：比如“Claude 4.6发布”是直接相关，而“AI 编程工具对比”是间接相关</li>
+</ol>
+<p>其次Query Expansion是因为有用到基础文本匹配过滤，也就是说内容必须要包含关键词，可能就会导致有些相似合理内容也被错误过滤了，所以我们可以用 Query Expand查询扩展。</p>
+<p>Query Expansion（查询扩展）是信息检索领域的一项经典技术，其核心思想是将用户的原始查询自动扩展为多个语义相近的变体查询，从而提高检索 召回率。这里也是直接调用api来进行扩展判断：</p>
+<table>
+<thead>
+<tr>
+<th>方面</th>
+<th>传统方法</th>
+<th>AI 驱动方法（本项目）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>扩展方 式</td>
+<td>同义词词典、词干提取</td>
+<td>AI 大模型理解语义并生成变体</td>
+</tr>
+<tr>
+<td>灵活性</td>
+<td>受限于预定义词典</td>
+<td>可以理解上下文和领域知识</td>
+</tr>
+<tr>
+<td>举例</td>
+<td>“AI” → “Artificial Intelligence”</td>
+<td>“Claude 4.6” → “Claude Sonnet 4.6”, “Anthropic Claude updat e”、”Claude 新版本“</td>
+</tr>
+<tr>
+<td>适用场 景</td>
+<td>通用搜索</td>
+<td>特定领域、多语言环境</td>
+</tr>
+</tbody></table>
+<p>流程大概是：用户输入关键词 → AI 生成查询变体列表 → 用所有变体并行搜索 → 合并去重结果 → AI 分析相关性</p>
+<p>接着就是让ai开发了，判断阈值可以反复让ai调试后，看效果，来决定最终版本。</p>
+<p>正常公司项目判断是要将准确率，召回率和f1值的，这里没有标注和测试团队，所以人工看一看吧。所谓人工智能，不得是既有人工，还有智能吗！[doge]</p>
+<h2 id="One-More-Things"><a href="#One-More-Things" class="headerlink" title="One More Things"></a>One More Things</h2><p>玩一下，将项目封装skills，以后可以给别的大模型调用。</p>
+<p>agent skill就是给 AI准备技能包，让 AI快速学习使用各种专业技能，而不用每次都重复输入提示词、编写脚本等等。本质是一组 结构化指令和资源，用于教会 AI完成特定任务。</p>
+<figure class="highlight markdown"><table><tr><td class="code"><pre><span class="line">skills/pptx/</span><br><span class="line">├── SKILL.md          # 技能说明书（必需）</span><br><span class="line">├── ooxml/            # OOXML 相关资源</span><br><span class="line">├── scripts/          # 处理脚本</span><br><span class="line">├── html2pptx.md      # HTML 转 PPT 说明</span><br><span class="line">├── ooxml.md          # OOXML 格式说明</span><br><span class="line">└── LICENSE.txt       # 许可证</span><br></pre></td></tr></table></figure>
+
+<p>我们想把这个做好的项目，让ai用skill-creator总结成skill，把 AI热点监控能力封装成 Agent Skills 技能，能够交给其他的 Al来监控和发现热点。</p>
+<p>SKILL. md 是 Skils中最重要的文件，AI 编程工具在启动时会扫描已安装的 Skils，将 SKILL.md的内容加载到记忆中。当用户输入匹配触发条件时，AI就会自动激活对应的技能。</p>
+<p>这里是直接跟ai说把项目封装成skill来做，要注意两点：</p>
+<ol>
+<li>确保动用skill-creator这个skill在做</li>
+<li>不要让ai封装项目前后端，然后写调用封装的skill。要让ai总结项目思路，然后写python流程。我们要让别的ai工具读到skill直接开始干活，而不是开始装一堆环境。</li>
+</ol>
+<p>告诉ai后：</p>
+<table>
+<thead>
+<tr>
+<th>对比维度</th>
+<th>旧方案（依赖 Server）</th>
+<th>新方案（完全自包含）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>安装难度</td>
+<td>需要启动后端服务</td>
+<td>复制文件夹即可</td>
+</tr>
+<tr>
+<td>依赖项</td>
+<td>Node.js+ 数据库 + OpenRouter</td>
+<td>仅需 Python（可选）</td>
+</tr>
+<tr>
+<td>AI 分析</td>
+<td>通过 OpenRouter API调用</td>
+<td>AI编程工具自身完成分析</td>
+</tr>
+<tr>
+<td>搜索能力</td>
+<td>调用后端 API</td>
+<td>内置 Python 搜索脚本</td>
+</tr>
+<tr>
+<td>可移植性</td>
+<td>只能在有服务器环境使用</td>
+<td>任何地方都能用</td>
+</tr>
+</tbody></table>
+<p>新方案的核心创新点是 Claude 即 AI引擎，不需要额外调用 OpenRouter，而是让 AI编程工具自身（比如 Claude、Copilot 中的模型）来完成内容分析。这样做好处：：</p>
+<ol>
+<li>﻿﻿﻿不需要用户额外配置 API Key</li>
+<li>﻿﻿﻿不产生额外 AI调用费用</li>
+<li>﻿﻿分析质量取决于用户使用 Al模型</li>
+</ol>
+<p>确定方案开始执行，基本就是一把过了，没有难度。用别的ai调用的时候（比如：claud或codex）记得把ai生成的skill包，放到这些工具的对应目录下，再测试。</p>
 ]]></content>
       <categories>
-        <category>Unity</category>
+        <category>AI agent</category>
       </categories>
       <tags>
-        <tag>U3D</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>CreatorKit Beginner Code</title>
-    <url>/2024/03/12/CreatorKit_BeginnerCode/</url>
-    <content><![CDATA[<h1 id="Unity脚本设计入门"><a href="#Unity脚本设计入门" class="headerlink" title="Unity脚本设计入门"></a>Unity脚本设计入门</h1><p>本篇是unity游戏中，C#脚本编辑的初体验<span id="more"></span></p>
-<p>依旧是跟随官方教程</p>
-<p>链接：<a href="https://learn.unity.com/project/creator-kit-beginner-code">https://learn.unity.com/project/creator-kit-beginner-code</a></p>
-<p>导入：<a href="https://assetstore.unity.com/packages/templates/tutorials/creator-kit-beginner-code-urp-151986">https://assetstore.unity.com/packages/templates/tutorials/creator-kit-beginner-code-urp-151986</a></p>
-<p>记得创建3D URP模版，不然运行有bug</p>
-<p>基本就是C#的标准结构，space，class，function，然后套官方函数，比如读属性，或者位置角度之类的，很简单。</p>
-<p>游戏挺有意思的，arpg，可以自己试着加一点获胜条件啥的玩一玩</p>
-]]></content>
-      <categories>
-        <category>Unity</category>
-      </categories>
-      <tags>
-        <tag>U3D</tag>
+        <tag>AI agent</tag>
       </tags>
   </entry>
   <entry>
@@ -130,59 +597,38 @@
       </tags>
   </entry>
   <entry>
-    <title>NLP基础工具系列-注音&amp;分词工具</title>
-    <url>/2026/04/15/NLP%E5%9F%BA%E7%A1%80%E5%B7%A5%E5%85%B7%E7%B3%BB%E5%88%97-%E6%B3%A8%E9%9F%B3-%E5%88%86%E8%AF%8D%E5%B7%A5%E5%85%B7/</url>
-    <content><![CDATA[<h1 id="NLP基础工具"><a href="#NLP基础工具" class="headerlink" title="NLP基础工具"></a>NLP基础工具</h1><h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>企业级nlp工具制作时候的心得分享，本篇更新：注音器 和 分词工具</p>
-<p>项目依赖并非普通民用所能接触，只能大致解释原理，多的不便多说。<span id="more"></span></p>
-<h2 id="注音器"><a href="#注音器" class="headerlink" title="注音器"></a>注音器</h2><h3 id="开门见山"><a href="#开门见山" class="headerlink" title="开门见山"></a>开门见山</h3><p>python的注音器，可以理解为 <a href="https://github.com/mozillazg/python-pinyin">pypinyin</a> 的进化版，如果你有企业级的词库作为支撑，这个注音器是个不二之选。</p>
-<h3 id="调用方法"><a href="#调用方法" class="headerlink" title="调用方法"></a>调用方法</h3><blockquote>
-<p>from zhuyin_tool import zhuyin</p>
-<p>result &#x3D; zhuyin(text, best_match&#x3D;0, use_tokenizer&#x3D;0)</p>
-</blockquote>
-<p>text: 要注音的str</p>
-<p>best_match: 因为有多音，有多种可能输出，&#x3D;0全出，&#x3D;1只出top prob首选</p>
-<p>use_tokenizer：是否开启分词器，0不开，1开启</p>
-<p>注：就算不开分词器，注音器也内置了最大前向匹配的基础分词</p>
-<h3 id="背景介绍"><a href="#背景介绍" class="headerlink" title="背景介绍"></a>背景介绍</h3><p>在工业化的使用场景下，你会发现pypinyin是不够用的，分两个方面</p>
-<ol>
-<li>准确率问题：包括了pypinyin对多音字词的支持，评测下来准确率是90%左右浮动，差的那10%就等着源源不断的问题吧</li>
-<li>业务场景支撑不行：pypinyin只能首选和全出，没有统计的支撑，举些例子：出血(xue&#x2F;xie)，谁(shei&#x2F;shui)是。这些词的多音是都对的，但此时如果你的注音器只能出一个结果，就很尴尬了，比如你在聊天场景，你的注音库是 出血（chuxie）用户输入 chuxue 你是可以不出词吗？显然你会被人骂死。</li>
-</ol>
-<p>正确的做法是，你应该基于数据统计来做注音，这能在提升注音准确率的同时，顺带给你一个分流的逻辑，比如 chuxie 50% &#x2F; chuxue 50%，这会对你在做带拼音词库，百科，词表等相关业务的时候有重要的帮助，所以在此手搓了这个注音器。</p>
-<h3 id="原理简介"><a href="#原理简介" class="headerlink" title="原理简介"></a>原理简介</h3><p>注音器的逻辑很简单，你要先有两个带拼音和统计的字典，然后最大前向匹配查字典就完了，如果有多段，记下概率后算笛卡尔积。如果要开分词器，开在最大前向匹配前。</p>
-<p><strong>关键在一手做字典的功力</strong></p>
-<p>首先你要有企业级的统计资源，比如你在：某聊天软件，某短视频字幕，某输入法，某搜索团队工作，这样你的统计回流做成的字典才能和pypinyin拉开大差距，我做下来，不同测试集正确率在97%-99%，pypinyin90%正确率。普通用户请出门左转pypinyin，已经很优秀了。</p>
-<p>然后就是根据hive回流统计去做字典，这项目里的字典只是做个演示，从 <a href="https://github.com/iDvel/rime-ice">雾凇拼音</a> 偷了一个大致像样主字典做的，做字典程序在 build_zhuyin_dict里，给你个sample，不要真用了，这并非我在用的字典。正常做法你要从云侧去统计，spark计算。至于计算过程，你看一下 single_zhuyin_dict.json 和 multi_zhuyin_dict.json 的格式应该就明白了。</p>
-<h3 id="问题解释"><a href="#问题解释" class="headerlink" title="问题解释"></a>问题解释</h3><p>有兄弟问了个很好的问题，比如 重 这个字，分布是：zhong 0.9，chong 0.1，那么我遇到 重大校区，即重庆大学校区的缩写，按笛卡尔积算不是照样首选zhongda吗？</p>
-<p>答案很简单，就是你的多字词库里要有，重大校区 这种搭配，或者你要去搞二元字典，重大-校区，重大-学生，我是觉得直接收录一元和扩展搜索二元字典区别不大</p>
-<p>主要还是你要有标注的字典资源。自己手标是不现实的，别想了，要有用户”自愿“的为你标注的业务场景，比如你在微信，你能统计到用户打chongdaxiaoqu，对话发送了 重大校区，然后你给这两个打点统计对起来，这种顶级的标注资源。相关业务云侧的统计数据，每日是TB级的，所以可想而知类似工具背后依赖的迭代字典对比开源的这些注音项目是力大砖飞的。</p>
-<p>否则，没有资源的，请出门左转pypinyin熬。</p>
-<h2 id="分词器"><a href="#分词器" class="headerlink" title="分词器"></a>分词器</h2><h3 id="调用方法-1"><a href="#调用方法-1" class="headerlink" title="调用方法"></a>调用方法</h3><figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">from</span> tokenizer <span class="keyword">import</span> Tokenizer</span><br><span class="line"></span><br><span class="line">tokenizer = Tokenizer()</span><br><span class="line">    </span><br><span class="line">unigram_csv_path = <span class="string">&quot;sys_unigram.csv&quot;</span></span><br><span class="line">bigram_csv_path = <span class="string">&quot;sys_bigram.csv&quot;</span></span><br><span class="line"></span><br><span class="line">tokenizer.init(unigram_csv_path, bigram_csv_path)</span><br><span class="line">result = tokenizer.segment(text)</span><br></pre></td></tr></table></figure>
-
-<h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p>也是一个基于统计语言模型的中文分词器</p>
-<p>核心做法是利用一元模型(Unigram)和二元模型(Bigram)，通过动态规划寻找最优分词路径。</p>
-<p>为什么用这个手搓的，说是主要改了算法公式和0.5那个配比参数，公式是融合了jieba的，最后评测下来提升也是高10%。但在我看来评价有夸大成分，主要还是背后的词库好，所以能有这个提升。我的建议是用jieba，把词库换了就完事了。该程序是我现在在用的分词器，python版本的仿写，加入了一些个人的理解。</p>
-<h3 id="原理简述"><a href="#原理简述" class="headerlink" title="原理简述"></a>原理简述</h3><p>词典加载：从CSV文件加载词语的对数概率，构建Unigram和Bigram概率表</p>
-<p>文本预处理：用正则表达式分离英文、数字和空白字符</p>
-<p>Trie树索引：将词典组织成前缀树，实现O(n)时间内的词语快速查找</p>
-<p>DAG构建：为输入句子构建有向无环图，节点表示字位置，边表示可能的词语</p>
-<p>动态规划：使用维特比算法求解最优路径，通过线性插值平滑平衡一元和二元概率</p>
-<p>路径回溯：根据DP结果回溯得到最终的分词序列</p>
-<p>该方法结合了词典匹配和概率图模型的优点，能够处理未登录词并考虑上下文信息。</p>
-<p>最终的关键还是一手做词库的数据功底</p>
-<h3 id="词库制作"><a href="#词库制作" class="headerlink" title="词库制作"></a>词库制作</h3><p>分词器依靠的是一个带分数的一元二元词库，一元类似：明天，二元类似：明天-见</p>
-<p>你要根据统计数据去计算分数</p>
-<p>一元分数是先从一元回流去筛选和抽一部分词库词（这个就靠你自己去想怎么做了），抽完以后，算全局概率分布，然后-logE。有条件的话你可以映射0-225。</p>
-<p>二元分数是，在一元词库的基础上，去二元回流统计里，捞前元是一元的那些，记得按频率筛选一下。然后计算前后元的条件概率，再-logE</p>
-<p>由于我没找到有那种开源的二元统计，这里就空着了，只传了分词器的实现部分，仅供参考。</p>
-<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>数据积累是一切算法实现的前提。</p>
-<p>其实这个世界从来没有什么弯道超车，有的只是厚积薄发。</p>
+    <title>CreatorKit-FPS</title>
+    <url>/2024/03/11/CreatorKit-FPS/</url>
+    <content><![CDATA[<h1 id="Unity3D项目初识"><a href="#Unity3D项目初识" class="headerlink" title="Unity3D项目初识"></a>Unity3D项目初识</h1><p>与Playground类似，本项目作为Unity 3D项目的入门，是官方教程的一部分<span id="more"></span></p>
+<p>官方教程链接：<a href="https://learn.unity.com/project/creator-kit-fps">https://learn.unity.com/project/creator-kit-fps</a></p>
+<p>项目载入地址：<a href="https://assetstore.unity.com/packages/templates/tutorials/unity-learn-creator-kit-fps-urp-149310">https://assetstore.unity.com/packages/templates/tutorials/unity-learn-creator-kit-fps-urp-149310</a></p>
+<p>创立一个3D空模版，直接assert store import就能开始了</p>
+<p>是一个初级的3D项目，让我们熟悉unity3D编辑器的应用，和控件的使用</p>
+<p>跟随教程一步步往下就行，主要体验过程</p>
 ]]></content>
       <categories>
-        <category>Basice_tool</category>
+        <category>Unity</category>
       </categories>
       <tags>
-        <tag>NLP</tag>
+        <tag>U3D</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>CreatorKit Beginner Code</title>
+    <url>/2024/03/12/CreatorKit_BeginnerCode/</url>
+    <content><![CDATA[<h1 id="Unity脚本设计入门"><a href="#Unity脚本设计入门" class="headerlink" title="Unity脚本设计入门"></a>Unity脚本设计入门</h1><p>本篇是unity游戏中，C#脚本编辑的初体验<span id="more"></span></p>
+<p>依旧是跟随官方教程</p>
+<p>链接：<a href="https://learn.unity.com/project/creator-kit-beginner-code">https://learn.unity.com/project/creator-kit-beginner-code</a></p>
+<p>导入：<a href="https://assetstore.unity.com/packages/templates/tutorials/creator-kit-beginner-code-urp-151986">https://assetstore.unity.com/packages/templates/tutorials/creator-kit-beginner-code-urp-151986</a></p>
+<p>记得创建3D URP模版，不然运行有bug</p>
+<p>基本就是C#的标准结构，space，class，function，然后套官方函数，比如读属性，或者位置角度之类的，很简单。</p>
+<p>游戏挺有意思的，arpg，可以自己试着加一点获胜条件啥的玩一玩</p>
+]]></content>
+      <categories>
+        <category>Unity</category>
+      </categories>
+      <tags>
+        <tag>U3D</tag>
       </tags>
   </entry>
   <entry>
@@ -387,6 +833,62 @@
       </categories>
       <tags>
         <tag>U3D</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>NLP基础工具系列-注音&amp;分词工具</title>
+    <url>/2026/04/15/NLP%E5%9F%BA%E7%A1%80%E5%B7%A5%E5%85%B7%E7%B3%BB%E5%88%97-%E6%B3%A8%E9%9F%B3-%E5%88%86%E8%AF%8D%E5%B7%A5%E5%85%B7/</url>
+    <content><![CDATA[<h1 id="NLP基础工具"><a href="#NLP基础工具" class="headerlink" title="NLP基础工具"></a>NLP基础工具</h1><h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>企业级nlp工具制作时候的心得分享，本篇更新：注音器 和 分词工具</p>
+<p>项目依赖并非普通民用所能接触，只能大致解释原理，多的不便多说。<span id="more"></span></p>
+<h2 id="注音器"><a href="#注音器" class="headerlink" title="注音器"></a>注音器</h2><h3 id="开门见山"><a href="#开门见山" class="headerlink" title="开门见山"></a>开门见山</h3><p>python的注音器，可以理解为 <a href="https://github.com/mozillazg/python-pinyin">pypinyin</a> 的进化版，如果你有企业级的词库作为支撑，这个注音器是个不二之选。</p>
+<h3 id="调用方法"><a href="#调用方法" class="headerlink" title="调用方法"></a>调用方法</h3><blockquote>
+<p>from zhuyin_tool import zhuyin</p>
+<p>result &#x3D; zhuyin(text, best_match&#x3D;0, use_tokenizer&#x3D;0)</p>
+</blockquote>
+<p>text: 要注音的str</p>
+<p>best_match: 因为有多音，有多种可能输出，&#x3D;0全出，&#x3D;1只出top prob首选</p>
+<p>use_tokenizer：是否开启分词器，0不开，1开启</p>
+<p>注：就算不开分词器，注音器也内置了最大前向匹配的基础分词</p>
+<h3 id="背景介绍"><a href="#背景介绍" class="headerlink" title="背景介绍"></a>背景介绍</h3><p>在工业化的使用场景下，你会发现pypinyin是不够用的，分两个方面</p>
+<ol>
+<li>准确率问题：包括了pypinyin对多音字词的支持，评测下来准确率是90%左右浮动，差的那10%就等着源源不断的问题吧</li>
+<li>业务场景支撑不行：pypinyin只能首选和全出，没有统计的支撑，举些例子：出血(xue&#x2F;xie)，谁(shei&#x2F;shui)是。这些词的多音是都对的，但此时如果你的注音器只能出一个结果，就很尴尬了，比如你在聊天场景，你的注音库是 出血（chuxie）用户输入 chuxue 你是可以不出词吗？显然你会被人骂死。</li>
+</ol>
+<p>正确的做法是，你应该基于数据统计来做注音，这能在提升注音准确率的同时，顺带给你一个分流的逻辑，比如 chuxie 50% &#x2F; chuxue 50%，这会对你在做带拼音词库，百科，词表等相关业务的时候有重要的帮助，所以在此手搓了这个注音器。</p>
+<h3 id="原理简介"><a href="#原理简介" class="headerlink" title="原理简介"></a>原理简介</h3><p>注音器的逻辑很简单，你要先有两个带拼音和统计的字典，然后最大前向匹配查字典就完了，如果有多段，记下概率后算笛卡尔积。如果要开分词器，开在最大前向匹配前。</p>
+<p><strong>关键在一手做字典的功力</strong></p>
+<p>首先你要有企业级的统计资源，比如你在：某聊天软件，某短视频字幕，某输入法，某搜索团队工作，这样你的统计回流做成的字典才能和pypinyin拉开大差距，我做下来，不同测试集正确率在97%-99%，pypinyin90%正确率。普通用户请出门左转pypinyin，已经很优秀了。</p>
+<p>然后就是根据hive回流统计去做字典，这项目里的字典只是做个演示，从 <a href="https://github.com/iDvel/rime-ice">雾凇拼音</a> 偷了一个大致像样主字典做的，做字典程序在 build_zhuyin_dict里，给你个sample，不要真用了，这并非我在用的字典。正常做法你要从云侧去统计，spark计算。至于计算过程，你看一下 single_zhuyin_dict.json 和 multi_zhuyin_dict.json 的格式应该就明白了。</p>
+<h3 id="问题解释"><a href="#问题解释" class="headerlink" title="问题解释"></a>问题解释</h3><p>有兄弟问了个很好的问题，比如 重 这个字，分布是：zhong 0.9，chong 0.1，那么我遇到 重大校区，即重庆大学校区的缩写，按笛卡尔积算不是照样首选zhongda吗？</p>
+<p>答案很简单，就是你的多字词库里要有，重大校区 这种搭配，或者你要去搞二元字典，重大-校区，重大-学生，我是觉得直接收录一元和扩展搜索二元字典区别不大</p>
+<p>主要还是你要有标注的字典资源。自己手标是不现实的，别想了，要有用户”自愿“的为你标注的业务场景，比如你在微信，你能统计到用户打chongdaxiaoqu，对话发送了 重大校区，然后你给这两个打点统计对起来，这种顶级的标注资源。相关业务云侧的统计数据，每日是TB级的，所以可想而知类似工具背后依赖的迭代字典对比开源的这些注音项目是力大砖飞的。</p>
+<p>否则，没有资源的，请出门左转pypinyin熬。</p>
+<h2 id="分词器"><a href="#分词器" class="headerlink" title="分词器"></a>分词器</h2><h3 id="调用方法-1"><a href="#调用方法-1" class="headerlink" title="调用方法"></a>调用方法</h3><figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">from</span> tokenizer <span class="keyword">import</span> Tokenizer</span><br><span class="line"></span><br><span class="line">tokenizer = Tokenizer()</span><br><span class="line">    </span><br><span class="line">unigram_csv_path = <span class="string">&quot;sys_unigram.csv&quot;</span></span><br><span class="line">bigram_csv_path = <span class="string">&quot;sys_bigram.csv&quot;</span></span><br><span class="line"></span><br><span class="line">tokenizer.init(unigram_csv_path, bigram_csv_path)</span><br><span class="line">result = tokenizer.segment(text)</span><br></pre></td></tr></table></figure>
+
+<h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p>也是一个基于统计语言模型的中文分词器</p>
+<p>核心做法是利用一元模型(Unigram)和二元模型(Bigram)，通过动态规划寻找最优分词路径。</p>
+<p>为什么用这个手搓的，说是主要改了算法公式和0.5那个配比参数，公式是融合了jieba的，最后评测下来提升也是高10%。但在我看来评价有夸大成分，主要还是背后的词库好，所以能有这个提升。我的建议是用jieba，把词库换了就完事了。该程序是我现在在用的分词器，python版本的仿写，加入了一些个人的理解。</p>
+<h3 id="原理简述"><a href="#原理简述" class="headerlink" title="原理简述"></a>原理简述</h3><p>词典加载：从CSV文件加载词语的对数概率，构建Unigram和Bigram概率表</p>
+<p>文本预处理：用正则表达式分离英文、数字和空白字符</p>
+<p>Trie树索引：将词典组织成前缀树，实现O(n)时间内的词语快速查找</p>
+<p>DAG构建：为输入句子构建有向无环图，节点表示字位置，边表示可能的词语</p>
+<p>动态规划：使用维特比算法求解最优路径，通过线性插值平滑平衡一元和二元概率</p>
+<p>路径回溯：根据DP结果回溯得到最终的分词序列</p>
+<p>该方法结合了词典匹配和概率图模型的优点，能够处理未登录词并考虑上下文信息。</p>
+<p>最终的关键还是一手做词库的数据功底</p>
+<h3 id="词库制作"><a href="#词库制作" class="headerlink" title="词库制作"></a>词库制作</h3><p>分词器依靠的是一个带分数的一元二元词库，一元类似：明天，二元类似：明天-见</p>
+<p>你要根据统计数据去计算分数</p>
+<p>一元分数是先从一元回流去筛选和抽一部分词库词（这个就靠你自己去想怎么做了），抽完以后，算全局概率分布，然后-logE。有条件的话你可以映射0-225。</p>
+<p>二元分数是，在一元词库的基础上，去二元回流统计里，捞前元是一元的那些，记得按频率筛选一下。然后计算前后元的条件概率，再-logE</p>
+<p>由于我没找到有那种开源的二元统计，这里就空着了，只传了分词器的实现部分，仅供参考。</p>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>数据积累是一切算法实现的前提。</p>
+<p>其实这个世界从来没有什么弯道超车，有的只是厚积薄发。</p>
+]]></content>
+      <categories>
+        <category>Basice_tool</category>
+      </categories>
+      <tags>
+        <tag>NLP</tag>
       </tags>
   </entry>
   <entry>

@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"gongqihua.github.io","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Agent热点追踪项目前言原项目是写在公司自有平台上的，平台的MEP项目，底层类似一个后端服务给你写好的，你直接在此基础上写进程和线程就行。ai api调用也是公司内部的，glm5.2，部分mcp也是改写的，恕在此无法展示。 但总思路是一致的，用agent的mcp工具去抓热点新闻，再调用api去判断新闻内容，给内容打分，给热度打分，最后再从新闻标题中挑选热词，这部分全部交给api，最后记录热点新闻">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Agent热点追踪项目">
+<meta property="og:url" content="https://gongqihua.github.io/2026/10/21/Agent%E7%83%AD%E7%82%B9%E8%BF%BD%E8%B8%AA%E9%A1%B9%E7%9B%AE/index.html">
+<meta property="og:site_name" content="Qihua&#39;s Blog">
+<meta property="og:description" content="Agent热点追踪项目前言原项目是写在公司自有平台上的，平台的MEP项目，底层类似一个后端服务给你写好的，你直接在此基础上写进程和线程就行。ai api调用也是公司内部的，glm5.2，部分mcp也是改写的，恕在此无法展示。 但总思路是一致的，用agent的mcp工具去抓热点新闻，再调用api去判断新闻内容，给内容打分，给热度打分，最后再从新闻标题中挑选热词，这部分全部交给api，最后记录热点新闻">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2026-10-21T14:02:00.000Z">
+<meta property="article:modified_time" content="2026-10-21T14:05:08.867Z">
+<meta property="article:author" content="Qihua Gong">
+<meta property="article:tag" content="AI agent">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://gongqihua.github.io/2026/10/21/Agent%E7%83%AD%E7%82%B9%E8%BF%BD%E8%B8%AA%E9%A1%B9%E7%9B%AE/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>Agent热点追踪项目 | Qihua's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Qihua's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">Personal Blog</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-resume">
+
+    <a href="/file/CV_QihuaGong_2026.pdf" rel="section"><i class="fa fa-file fa-fw"></i>Resume</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://gongqihua.github.io/2026/10/21/Agent%E7%83%AD%E7%82%B9%E8%BF%BD%E8%B8%AA%E9%A1%B9%E7%9B%AE/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://s2.loli.net/2024/02/27/t6ipmhvbDjX7zn5.jpg">
+      <meta itemprop="name" content="Qihua Gong">
+      <meta itemprop="description" content="Qihua Personal Blog">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Qihua's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Agent热点追踪项目
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2026-10-21 22:02:00 / Modified: 22:05:08" itemprop="dateCreated datePublished" datetime="2026-10-21T22:02:00+08:00">2026-10-21</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI-agent/" itemprop="url" rel="index"><span itemprop="name">AI agent</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="Agent热点追踪项目"><a href="#Agent热点追踪项目" class="headerlink" title="Agent热点追踪项目"></a>Agent热点追踪项目</h1><h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>原项目是写在公司自有平台上的，平台的MEP项目，底层类似一个后端服务给你写好的，你直接在此基础上写进程和线程就行。ai api调用也是公司内部的，glm5.2，部分mcp也是改写的，恕在此无法展示。</p>
+<p>但总思路是一致的，用agent的mcp工具去抓热点新闻，再调用api去判断新闻内容，给内容打分，给热度打分，最后再从新闻标题中挑选热词，这部分全部交给api，最后记录热点新闻和热词两部分内容。</p>
+<p>这里上传github的项目是重做的，带着整个前后端的，全程由牛逼的codex生成。</p>
+<p>项目链接：<a target="_blank" rel="noopener" href="https://github.com/GongQihua/hotspot_monitor">Agent热点追踪项目</a><span id="more"></span></p>
+<h1 id="前期准备"><a href="#前期准备" class="headerlink" title="前期准备"></a>前期准备</h1><p>部分api和工具要提前准备：</p>
+<ol>
+<li>OpenRouter API：agent需要调用的api</li>
+<li>twitter API：抓取twitter新闻用的，也要付费</li>
+<li>Firecrawl：爬虫mcp</li>
+<li>Context7：读最新文档用的mcp，调用接口和api用</li>
+<li>UI UX Pro Max：美化前端的skill</li>
+<li>Skill Creator：总结生成skill用</li>
+</ol>
+<h2 id="Vibe-coding"><a href="#Vibe-coding" class="headerlink" title="Vibe-coding"></a>Vibe-coding</h2><p>给codex说需求，ai给出的方案：</p>
+<p>热点监控工具-设计方案</p>
+<table>
+<thead>
+<tr>
+<th>层级</th>
+<th>技术</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>前端</td>
+<td>React + Vite + TailwindCSS</td>
+<td>快速开发、响位式、独特 UI</td>
+</tr>
+<tr>
+<td>后端</td>
+<td>Node.js + Express</td>
+<td>轻量、快速</td>
+</tr>
+<tr>
+<td>数据存储</td>
+<td>Prisma + SQLite</td>
+<td>轻量级、无需额外配置</td>
+</tr>
+</tbody></table>
+<p>新闻抓取的api来源：twitter api，bing search api，微博&#x2F;b站 api</p>
+<p>然后ai会有一堆方案确认，化身yes工程师照着一个个回答和allow就完事了。记得让ai沉淀markdown文档。</p>
+<p>初版功能验收清单：</p>
+<ol>
+<li>﻿﻿﻿仪表盘 - 显示热点统计和最新热点列表</li>
+<li>﻿﻿﻿关键词管理-添加&#x2F;删除&#x2F;启用&#x2F;禁用监控关键词</li>
+<li>﻿﻿搜索-手动搜索热点内容</li>
+<li>﻿﻿﻿立即检查 - 手动触发热点抓取</li>
+<li>﻿﻿通知 -右上角通知铃铛，实时推送新热点</li>
+</ol>
+<p>这里记得.env文件不要直接用，创建一个测试env。出版功能验证后，记得git一下代码再做后续。</p>
+<p>ai问新闻标题审核流程，跟他说的时候有条理一点：</p>
+<ol>
+<li>﻿﻿﻿真实性判断：Al判断这条信息是否真实可信（过滤标题党、假消息）</li>
+<li>﻿﻿相关性评分：Al给出 0-100 分相关性评分，表示与监控关键词匹配度</li>
+<li>﻿﻿重要性分级：分为 urgent（紧急）、high（高）、medium（中）、low（低）四个等级</li>
+<li>﻿﻿﻿摘要生成：AI自动生成简洁的中文摘要，方便快速阅读</li>
+</ol>
+<p>流程：原始信息→ AI分析→真实性判断→相关性评分→重要性分级→摘要生成</p>
+<p>几乎是一把过了：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">hotnews-monitor/</span><br><span class="line">├── server/                 # 后端项目</span><br><span class="line">│   ├── src/</span><br><span class="line">│   │   ├── routes/         # API 路由</span><br><span class="line">│   │   ├── services/       # 业务逻辑（采集、分析、通知等）</span><br><span class="line">│   │   ├── prisma/         # 数据库模型定义</span><br><span class="line">│   │   └── index.ts        # 入口文件</span><br><span class="line">│   ├── .env                # 环境变量（敏感信息）</span><br><span class="line">│   └── package.json</span><br><span class="line">├── client/                 # 前端项目</span><br><span class="line">│   ├── src/</span><br><span class="line">│   │   ├── components/     # React 组件</span><br><span class="line">│   │   ├── pages/          # 页面</span><br><span class="line">│   │   └── App.tsx         # 根组件</span><br><span class="line">│   └── package.json</span><br><span class="line">└── docs/                   # 项目文档</span><br></pre></td></tr></table></figure>
+
+<h2 id="优化1-前端页面"><a href="#优化1-前端页面" class="headerlink" title="优化1: 前端页面"></a>优化1: 前端页面</h2><p>前端页面一打开ai味太冲了，优化一波，可能是由于ai前端祖传的TailwindCSS。</p>
+<p>这里就要用到UI UX Pro Max这个skill了，先让他用contest7好好读最新文档，然后告诉他用高端一点的组件库：Aceternity UI，prompt语句写好约束和思路：</p>
+<ol>
+<li>﻿指定色彩方案：不要让 AI自由发挥，明确告诉它用什么颜色</li>
+<li>﻿﻿﻿使用特定 UI库：比如 Aceternity UI，它有独特视觉风格</li>
+<li>﻿﻿注入情感和场景：告诉 AI你产品是什么调性（科技感、极客风等）</li>
+<li>﻿﻿使用前端美化技能：让 Al参考专业 UI&#x2F;UX 设计规范</li>
+</ol>
+<p>这步优化前记得清一下上下文，省点token。可以反复做炼金看看效果，记得git保存版本。</p>
+<h2 id="优化2-信息获取来源"><a href="#优化2-信息获取来源" class="headerlink" title="优化2: 信息获取来源"></a>优化2: 信息获取来源</h2><p>初始版本只有twitter api 和 bing api，twitter api的来源质量还有点低。</p>
+<p>现在需要：</p>
+<ol>
+<li>强化twitter和bing来源的内容过滤</li>
+<li>增加国内源：微博热搜，b站api</li>
+</ol>
+<p>跟ai讨论一下方案后：</p>
+<table>
+<thead>
+<tr>
+<th>问题 1:Twitter 信息质量过滤</th>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>过滤维度</td>
+<td>建议阈值</td>
+<td>说明</td>
+</tr>
+<tr>
+<td>最低点赞数</td>
+<td>≥ 10</td>
+<td>过滤无人关注的随机帖子</td>
+</tr>
+<tr>
+<td>最低转发数</td>
+<td>≥ 5</td>
+<td>有传播价值的内容</td>
+</tr>
+<tr>
+<td>最低浏览量</td>
+<td>≥ 500</td>
+<td>有一定关注度</td>
+</tr>
+<tr>
+<td>作者粉丝数</td>
+<td>≥ 100</td>
+<td>排除僵尸&#x2F;新号</td>
+</tr>
+<tr>
+<td>认证优先</td>
+<td>蓝V 加权</td>
+<td>可信度更高</td>
+</tr>
+<tr>
+<td>排除回复推文</td>
+<td>过滤reply 类型</td>
+<td>只保留原创推文</td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th>问题2：扩展信息来源</th>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>数据源</td>
+<td>实现方式</td>
+<td>特点</td>
+</tr>
+<tr>
+<td>Bing</td>
+<td>已实现</td>
+<td>稳定，国内可用</td>
+</tr>
+<tr>
+<td>Google</td>
+<td>已实现</td>
+<td>需启用，可能被封</td>
+</tr>
+<tr>
+<td>DuckDuckGo</td>
+<td>新增</td>
+<td>无需 APl，反爬虫弱</td>
+</tr>
+<tr>
+<td>Hacker News</td>
+<td>新增</td>
+<td>Al&#x2F;技术热点专业来源</td>
+</tr>
+<tr>
+<td>Reddit</td>
+<td>新增（可选）</td>
+<td>技术社区讨论</td>
+</tr>
+<tr>
+<td>国内新闻源</td>
+<td>新增</td>
+<td>微博爬虫，b站api</td>
+</tr>
+</tbody></table>
+<p>在新增搜索引擎数据源时，AI使用了 Axios+ Cheerio 的爬虫方案：</p>
+<ul>
+<li>﻿Axios：一个流行 HTTP 请求库，用于发送 GET&#x2F;POST 请求获取网页 HTML</li>
+<li>﻿Cheerio：一个轻量级的 HTML 解析库，提供了类似jQuery API来提取页面元素</li>
+</ul>
+<p>工作流程：</p>
+<p>发送 HTTP 请求获取网页 HTML→ Cheerio解析 HTML→提取搜索结果（标题、链接、描述）→返回结构化数据</p>
+<p>爬虫用来应对微博和搜狗热搜，多轮迭代优化后，效果好很多了。看到ai卡住，反复优化同一个点的时候，记得手动停一停。</p>
+<p>告诉ai，在数据采集阶段，应该尽可能拓宽搜索范围，不要过早过滤。过滤应该分层进行，明确告诉ai最后结果 质量&gt;数量：</p>
+<ol>
+<li>﻿﻿第一层：基础过滤（去重、时间窗口、格式校验）</li>
+<li>﻿﻿﻿第二层：质量过滤（社交指标、作者信誉）</li>
+<li>﻿﻿第三层：AI深度分析（真假识别、相关性评分）</li>
+</ol>
+<p>数据采集（尽量多）→基础过滤（去重、时间）→ AI 深度分析（相关性、真假）→最终展示</p>
+<h2 id="优化3-信息筛选排序"><a href="#优化3-信息筛选排序" class="headerlink" title="优化3: 信息筛选排序"></a>优化3: 信息筛选排序</h2><p>现在前端展示页面是竖直排列，获取到的热点全都堆在一起，不利于人工检索，因此希望能够对帖子进行筛选和排序。</p>
+<p>当系统从 8+ 个信息源采集数据后，一次扫描可能产生几十甚至上百条结果。如果所有内容平铺展示，用户需要逐条阅读才能找到有价值的信息，效率很低。</p>
+<p>选和排序解决了两个核心问题：</p>
+<ol>
+<li>﻿﻿信息过载：通过筛选条件缩小范围，快速找到特定类型信息</li>
+<li>﻿﻿优先级判断：通过排序将最有价值的信息排在最前面</li>
+</ol>
+<p>这在信息系统设计中是一个经典需求，类似于电商网站的商品筛选、新闻客户端内容排序。跟ai讨论后确定方案：</p>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>可选值</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>信息来源</td>
+<td>Twitter &#x2F; Bing &#x2F; HackerNews／搜狗／B站等</td>
+<td>按来源过滤</td>
+</tr>
+<tr>
+<td>重要性</td>
+<td>urgent &#x2F; high &#x2F; medium &#x2F; low</td>
+<td>按 AI判定的重要性级别过滤</td>
+</tr>
+<tr>
+<td>关键词</td>
+<td>用户配置的所有关键词</td>
+<td>按监控关键词过滤</td>
+</tr>
+<tr>
+<td>时间范围</td>
+<td>最近1小时／6小时／24小时／7天／全部</td>
+<td>按发现时间过滤</td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th>排序</th>
+<th>规则</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>热度综合</td>
+<td>综合点赞、转发、浏览量等指标</td>
+<td>社交热度最高的排在前面</td>
+</tr>
+<tr>
+<td>相关性</td>
+<td>按AI评分排序</td>
+<td>与关键词最相关的排在前面</td>
+</tr>
+<tr>
+<td>最新发布</td>
+<td>按帖子原始发布时间排序</td>
+<td>最新发布的排在前面</td>
+</tr>
+<tr>
+<td>最新发现</td>
+<td>按系统抓取时间排序</td>
+<td>最新被系统发现的排在前面</td>
+</tr>
+<tr>
+<td>重要程度</td>
+<td>按AI判定重要性排序</td>
+<td>最紧急重要的排在前面</td>
+</tr>
+</tbody></table>
+<p><strong>筛选排序技术实现</strong></p>
+<p>筛选排序功能涉及前后端协同：</p>
+<p>后端实现要点：</p>
+<ul>
+<li>﻿﻿将筛选参数作为 API查询参数</li>
+<li>﻿使用 Prisma的 where 子句实现筛选</li>
+<li>﻿﻿使用Prisma的 orderBy 子句实现排序</li>
+<li>热度综合排序需要自定义排序逻辑（综合多个指标计算得分）</li>
+</ul>
+<p>前端实现要点：</p>
+<ul>
+<li>﻿﻿使用下拉菜单或标签组件展示选选项</li>
+<li>﻿﻿筛选条件变化时重新请求后端 API</li>
+<li>﻿﻿保持 URL 参数与筛选状态同步（方便分享链接）</li>
+<li>﻿﻿加载状态和空结果的友好提示</li>
+</ul>
+<p>分页实现：</p>
+<ul>
+<li>﻿﻿后端支持 page 和 pagesize 参数</li>
+<li>﻿﻿前端实现“加载更多”按钮</li>
+<li>﻿﻿切换筛选&#x2F;排序条件时重置页码</li>
+</ul>
+<p>可以顺便让ai写一下单元测试，避免不可维护。大功告成</p>
+<h2 id="优化4-优化热点信息展示"><a href="#优化4-优化热点信息展示" class="headerlink" title="优化4: 优化热点信息展示"></a>优化4: 优化热点信息展示</h2><p>目前只是有一部分信息的展示，好的信息展示应该遵循“一眼值不值”原则，用户只需要看一眼，就能判断这条信息是否值得深入阅读。要实现这一点，需要在有限的展示空间内提供 关键决策信息。跟ai讨论了一下，大致需要一下几个点：</p>
+<table>
+<thead>
+<tr>
+<th>决策维度</th>
+<th>对应信息</th>
+<th>为什么重要</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>时效性</td>
+<td>发布时间、抓取时间</td>
+<td>判断信息是否过时</td>
+</tr>
+<tr>
+<td>热度</td>
+<td>点赞、转发、浏览量</td>
+<td>判断信息的关注度</td>
+</tr>
+<tr>
+<td>可信度</td>
+<td>作者信息、认证状态</td>
+<td>判断信息来源是否可信</td>
+</tr>
+<tr>
+<td>相关性</td>
+<td>AI 相关性评分和理由</td>
+<td>判断信息是否与关注话题相关</td>
+</tr>
+<tr>
+<td>原文链接</td>
+<td>一键跳转</td>
+<td>方便深入阅读原始内容</td>
+</tr>
+</tbody></table>
+<p>最后要补充的点：帖子发布时间，系统抓取时间，更多互动数据，Al 相关性理由，作者信息，原始内容展开，真实性标记，热度综合指标，相对时间显示，总结给ai</p>
+<table>
+<thead>
+<tr>
+<th>新功能</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>发布时间</td>
+<td>显示“发布X小时前”，hover显示完整日期</td>
+</tr>
+<tr>
+<td>抓取时间</td>
+<td>显示“抓取X分钟前”，hover显示完整日期</td>
+</tr>
+<tr>
+<td>互动数据</td>
+<td>点赞&#x2F;转发&#x2F;回复&#x2F;评论&#x2F;引用&#x2F;浏览量&#x2F;弹幕，有则显示</td>
+</tr>
+<tr>
+<td>Al 分析理由</td>
+<td>可展开&#x2F;折叠，含”一键展开&#x2F;折叠所有“按钮</td>
+</tr>
+<tr>
+<td>作者信息</td>
+<td>头像、名称、＠用户名、认证标记、粉丝数</td>
+</tr>
+<tr>
+<td>原始内容</td>
+<td>可折叠展开查看原始描述</td>
+</tr>
+<tr>
+<td>AI 摘要标注</td>
+<td>summary 前显示”AI 摘要”标签</td>
+</tr>
+<tr>
+<td>真实性标记</td>
+<td>可疑内容显示红色“可疑”，高相关性显示绿色”可信”</td>
+</tr>
+<tr>
+<td>热度综合指标</td>
+<td>基于多维互动数据的综合热度分（爆&#x2F;热&#x2F;温&#x2F;凉&#x2F;冷）</td>
+</tr>
+<tr>
+<td>相对时间</td>
+<td>所有时间均使用“X小时前“格式，hover 可见完整时间</td>
+</tr>
+</tbody></table>
+<p>包括一些后端改造：</p>
+<ol>
+<li><p>﻿﻿﻿数据采集阶段：在抓取信息时，同时获取互动数据（点赞、转发、浏览量等）</p>
+</li>
+<li><p>﻿﻿数据存储：在 Prisma 数据模型中增加对应字段</p>
+</li>
+<li><p>API响应：在返回给前端数据中包含新增字段</p>
+</li>
+</ol>
+<p>不同信息源提供的互动数据格式不同，需要统一处理。这是更改前后对比</p>
+<table>
+<thead>
+<tr>
+<th>优化前</th>
+<th>优化后</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>只有标题和描述</td>
+<td>标题+描述+发布时间+抓取时间</td>
+</tr>
+<tr>
+<td>只显示点赞数</td>
+<td>点赞、转发、回复、浏览量等完整互动数据</td>
+</tr>
+<tr>
+<td>无分析理由</td>
+<td>AI 相关性分析理由，支持展开&#x2F;折叠</td>
+</tr>
+<tr>
+<td>无作者信息</td>
+<td>作者名称、认证状态</td>
+</tr>
+<tr>
+<td>需要跳转查看详情</td>
+<td>关键信息一目了然</td>
+</tr>
+</tbody></table>
+<h2 id="优化5-AI分析准确度提升-关键词扩展搜索"><a href="#优化5-AI分析准确度提升-关键词扩展搜索" class="headerlink" title="优化5: AI分析准确度提升&amp;关键词扩展搜索"></a>优化5: AI分析准确度提升&amp;关键词扩展搜索</h2><p>又发现问题，AI筛选的内容，跟关键词的关联度不够，至少人看是这样。可能原因是：搜索引擎返回的内容本身就不够相关，关键词过于宽泛或模糊。给 AI的分析提示词不够精确，相关性评分的阈值设置不合理，无法量化分析质量。</p>
+<p>与ai讨论方案后，加入关联性判断和Query Expansion（查询扩展）</p>
+<p>首先关联性判断是因为原Prompt 要求“生成简短摘要”，AI自然只会介绍内容概要，而不会说明“这篇内容跟你搜索的关键词有什么关系”，现更改prompt明确要求。方法是强化prompt规范：</p>
+<ol>
+<li>﻿﻿要求说明关联关系：AI 不仅要给分数，还要解释为什么觉得相关</li>
+<li>﻿﻿﻿增加 keywordMentioned 字段：明确标记内容中是否直接提到了关键词</li>
+<li>﻿﻿区分直接相关和间接相关：比如“Claude 4.6发布”是直接相关，而“AI 编程工具对比”是间接相关</li>
+</ol>
+<p>其次Query Expansion是因为有用到基础文本匹配过滤，也就是说内容必须要包含关键词，可能就会导致有些相似合理内容也被错误过滤了，所以我们可以用 Query Expand查询扩展。</p>
+<p>Query Expansion（查询扩展）是信息检索领域的一项经典技术，其核心思想是将用户的原始查询自动扩展为多个语义相近的变体查询，从而提高检索 召回率。这里也是直接调用api来进行扩展判断：</p>
+<table>
+<thead>
+<tr>
+<th>方面</th>
+<th>传统方法</th>
+<th>AI 驱动方法（本项目）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>扩展方 式</td>
+<td>同义词词典、词干提取</td>
+<td>AI 大模型理解语义并生成变体</td>
+</tr>
+<tr>
+<td>灵活性</td>
+<td>受限于预定义词典</td>
+<td>可以理解上下文和领域知识</td>
+</tr>
+<tr>
+<td>举例</td>
+<td>“AI” → “Artificial Intelligence”</td>
+<td>“Claude 4.6” → “Claude Sonnet 4.6”, “Anthropic Claude updat e”、”Claude 新版本“</td>
+</tr>
+<tr>
+<td>适用场 景</td>
+<td>通用搜索</td>
+<td>特定领域、多语言环境</td>
+</tr>
+</tbody></table>
+<p>流程大概是：用户输入关键词 → AI 生成查询变体列表 → 用所有变体并行搜索 → 合并去重结果 → AI 分析相关性</p>
+<p>接着就是让ai开发了，判断阈值可以反复让ai调试后，看效果，来决定最终版本。</p>
+<p>正常公司项目判断是要将准确率，召回率和f1值的，这里没有标注和测试团队，所以人工看一看吧。所谓人工智能，不得是既有人工，还有智能吗！[doge]</p>
+<h2 id="One-More-Things"><a href="#One-More-Things" class="headerlink" title="One More Things"></a>One More Things</h2><p>玩一下，将项目封装skills，以后可以给别的大模型调用。</p>
+<p>agent skill就是给 AI准备技能包，让 AI快速学习使用各种专业技能，而不用每次都重复输入提示词、编写脚本等等。本质是一组 结构化指令和资源，用于教会 AI完成特定任务。</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">skills/pptx/</span><br><span class="line">├── SKILL.md          # 技能说明书（必需）</span><br><span class="line">├── ooxml/            # OOXML 相关资源</span><br><span class="line">├── scripts/          # 处理脚本</span><br><span class="line">├── html2pptx.md      # HTML 转 PPT 说明</span><br><span class="line">├── ooxml.md          # OOXML 格式说明</span><br><span class="line">└── LICENSE.txt       # 许可证</span><br></pre></td></tr></table></figure>
+
+<p>我们想把这个做好的项目，让ai用skill-creator总结成skill，把 AI热点监控能力封装成 Agent Skills 技能，能够交给其他的 Al来监控和发现热点。</p>
+<p>SKILL. md 是 Skils中最重要的文件，AI 编程工具在启动时会扫描已安装的 Skils，将 SKILL.md的内容加载到记忆中。当用户输入匹配触发条件时，AI就会自动激活对应的技能。</p>
+<p>这里是直接跟ai说把项目封装成skill来做，要注意两点：</p>
+<ol>
+<li>确保动用skill-creator这个skill在做</li>
+<li>不要让ai封装项目前后端，然后写调用封装的skill。要让ai总结项目思路，然后写python流程。我们要让别的ai工具读到skill直接开始干活，而不是开始装一堆环境。</li>
+</ol>
+<p>告诉ai后：</p>
+<table>
+<thead>
+<tr>
+<th>对比维度</th>
+<th>旧方案（依赖 Server）</th>
+<th>新方案（完全自包含）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>安装难度</td>
+<td>需要启动后端服务</td>
+<td>复制文件夹即可</td>
+</tr>
+<tr>
+<td>依赖项</td>
+<td>Node.js+ 数据库 + OpenRouter</td>
+<td>仅需 Python（可选）</td>
+</tr>
+<tr>
+<td>AI 分析</td>
+<td>通过 OpenRouter API调用</td>
+<td>AI编程工具自身完成分析</td>
+</tr>
+<tr>
+<td>搜索能力</td>
+<td>调用后端 API</td>
+<td>内置 Python 搜索脚本</td>
+</tr>
+<tr>
+<td>可移植性</td>
+<td>只能在有服务器环境使用</td>
+<td>任何地方都能用</td>
+</tr>
+</tbody></table>
+<p>新方案的核心创新点是 Claude 即 AI引擎，不需要额外调用 OpenRouter，而是让 AI编程工具自身（比如 Claude、Copilot 中的模型）来完成内容分析。这样做好处：：</p>
+<ol>
+<li>﻿﻿﻿不需要用户额外配置 API Key</li>
+<li>﻿﻿﻿不产生额外 AI调用费用</li>
+<li>﻿﻿分析质量取决于用户使用 Al模型</li>
+</ol>
+<p>确定方案开始执行，基本就是一把过了，没有难度。用别的ai调用的时候（比如：claud或codex）记得把ai生成的skill包，放到这些工具的对应目录下，再测试。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/AI-agent/" rel="tag"># AI agent</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2026/04/15/NLP%E5%9F%BA%E7%A1%80%E5%B7%A5%E5%85%B7%E7%B3%BB%E5%88%97-%E6%B3%A8%E9%9F%B3-%E5%88%86%E8%AF%8D%E5%B7%A5%E5%85%B7/" rel="prev" title="NLP基础工具系列-注音&分词工具">
+      <i class="fa fa-chevron-left"></i> NLP基础工具系列-注音&分词工具
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Agent%E7%83%AD%E7%82%B9%E8%BF%BD%E8%B8%AA%E9%A1%B9%E7%9B%AE"><span class="nav-number">1.</span> <span class="nav-text">Agent热点追踪项目</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.1.</span> <span class="nav-text">前言</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%89%8D%E6%9C%9F%E5%87%86%E5%A4%87"><span class="nav-number">2.</span> <span class="nav-text">前期准备</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Vibe-coding"><span class="nav-number">2.1.</span> <span class="nav-text">Vibe-coding</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BC%98%E5%8C%961-%E5%89%8D%E7%AB%AF%E9%A1%B5%E9%9D%A2"><span class="nav-number">2.2.</span> <span class="nav-text">优化1: 前端页面</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BC%98%E5%8C%962-%E4%BF%A1%E6%81%AF%E8%8E%B7%E5%8F%96%E6%9D%A5%E6%BA%90"><span class="nav-number">2.3.</span> <span class="nav-text">优化2: 信息获取来源</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BC%98%E5%8C%963-%E4%BF%A1%E6%81%AF%E7%AD%9B%E9%80%89%E6%8E%92%E5%BA%8F"><span class="nav-number">2.4.</span> <span class="nav-text">优化3: 信息筛选排序</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BC%98%E5%8C%964-%E4%BC%98%E5%8C%96%E7%83%AD%E7%82%B9%E4%BF%A1%E6%81%AF%E5%B1%95%E7%A4%BA"><span class="nav-number">2.5.</span> <span class="nav-text">优化4: 优化热点信息展示</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BC%98%E5%8C%965-AI%E5%88%86%E6%9E%90%E5%87%86%E7%A1%AE%E5%BA%A6%E6%8F%90%E5%8D%87-%E5%85%B3%E9%94%AE%E8%AF%8D%E6%89%A9%E5%B1%95%E6%90%9C%E7%B4%A2"><span class="nav-number">2.6.</span> <span class="nav-text">优化5: AI分析准确度提升&amp;关键词扩展搜索</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#One-More-Things"><span class="nav-number">2.7.</span> <span class="nav-text">One More Things</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Qihua Gong"
+      src="https://s2.loli.net/2024/02/27/t6ipmhvbDjX7zn5.jpg">
+  <p class="site-author-name" itemprop="name">Qihua Gong</p>
+  <div class="site-description" itemprop="description">Qihua Personal Blog</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">16</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/gongqihua" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;gongqihua" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:gongqihua0115@gmail.com" title="E-Mail → mailto:gongqihua0115@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.linkedin.com/in/gongqihua0115/" title="Linkedin → https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;gongqihua0115&#x2F;" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i>Linkedin</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://steamcommunity.com/profiles/76561198189728994/" title="Steam → https:&#x2F;&#x2F;steamcommunity.com&#x2F;profiles&#x2F;76561198189728994&#x2F;" rel="noopener" target="_blank"><i class="fab fa-steam fa-fw"></i>Steam</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="/file/CV_Game_CN.pdf" title="&#x2F;file&#x2F;CV_Game_CN.pdf">旧简历_游戏</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2024 – 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Qihua Gong</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
