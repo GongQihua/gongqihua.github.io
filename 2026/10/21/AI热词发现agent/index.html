@@ -20,20 +20,20 @@
     var CONFIG = {"hostname":"gongqihua.github.io","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="Agent热点追踪项目前言原项目是写在公司自有平台上的，平台的MEP项目，底层类似一个后端服务给你写好的，你直接在此基础上写进程和线程就行。ai api调用也是公司内部的，glm5.2，部分mcp也是改写的，恕在此无法展示。 但总思路是一致的，用agent的mcp工具去抓热点新闻，再调用api去判断新闻内容，给内容打分，给热度打分，最后再从新闻标题中挑选热词，这部分全部交给api，最后记录热点新闻">
+  <meta name="description" content="AI热词发现agent前言原项目是写在公司自有平台上的，平台的MEP项目，底层类似一个后端服务给你写好的，你直接在此基础上写进程和线程就行。ai api调用也是公司内部的，glm5.2，部分mcp也是改写的，恕在此无法展示。 但总思路是一致的，用agent的mcp工具去抓热点新闻，再调用api去判断新闻内容，给内容打分，给热度打分，最后再从新闻标题中挑选热词，这部分全部交给api，最后记录热点新闻">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Agent热点追踪项目">
-<meta property="og:url" content="https://gongqihua.github.io/2026/10/21/Agent%E7%83%AD%E7%82%B9%E8%BF%BD%E8%B8%AA%E9%A1%B9%E7%9B%AE/index.html">
+<meta property="og:title" content="AI热词发现agent">
+<meta property="og:url" content="https://gongqihua.github.io/2026/10/21/AI%E7%83%AD%E8%AF%8D%E5%8F%91%E7%8E%B0agent/index.html">
 <meta property="og:site_name" content="Qihua&#39;s Blog">
-<meta property="og:description" content="Agent热点追踪项目前言原项目是写在公司自有平台上的，平台的MEP项目，底层类似一个后端服务给你写好的，你直接在此基础上写进程和线程就行。ai api调用也是公司内部的，glm5.2，部分mcp也是改写的，恕在此无法展示。 但总思路是一致的，用agent的mcp工具去抓热点新闻，再调用api去判断新闻内容，给内容打分，给热度打分，最后再从新闻标题中挑选热词，这部分全部交给api，最后记录热点新闻">
+<meta property="og:description" content="AI热词发现agent前言原项目是写在公司自有平台上的，平台的MEP项目，底层类似一个后端服务给你写好的，你直接在此基础上写进程和线程就行。ai api调用也是公司内部的，glm5.2，部分mcp也是改写的，恕在此无法展示。 但总思路是一致的，用agent的mcp工具去抓热点新闻，再调用api去判断新闻内容，给内容打分，给热度打分，最后再从新闻标题中挑选热词，这部分全部交给api，最后记录热点新闻">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2026-10-21T14:02:00.000Z">
-<meta property="article:modified_time" content="2026-10-21T14:05:08.867Z">
+<meta property="article:modified_time" content="2026-10-28T14:30:26.957Z">
 <meta property="article:author" content="Qihua Gong">
 <meta property="article:tag" content="AI agent">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="https://gongqihua.github.io/2026/10/21/Agent%E7%83%AD%E7%82%B9%E8%BF%BD%E8%B8%AA%E9%A1%B9%E7%9B%AE/">
+<link rel="canonical" href="https://gongqihua.github.io/2026/10/21/AI%E7%83%AD%E8%AF%8D%E5%8F%91%E7%8E%B0agent/">
 
 
 <script id="page-configurations">
@@ -46,7 +46,7 @@
   };
 </script>
 
-  <title>Agent热点追踪项目 | Qihua's Blog</title>
+  <title>AI热词发现agent | Qihua's Blog</title>
   
 
 
@@ -200,7 +200,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://gongqihua.github.io/2026/10/21/Agent%E7%83%AD%E7%82%B9%E8%BF%BD%E8%B8%AA%E9%A1%B9%E7%9B%AE/">
+    <link itemprop="mainEntityOfPage" href="https://gongqihua.github.io/2026/10/21/AI%E7%83%AD%E8%AF%8D%E5%8F%91%E7%8E%B0agent/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://s2.loli.net/2024/02/27/t6ipmhvbDjX7zn5.jpg">
@@ -213,7 +213,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          Agent热点追踪项目
+          AI热词发现agent
         </h1>
 
         <div class="post-meta">
@@ -222,10 +222,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2026-10-21 22:02:00 / Modified: 22:05:08" itemprop="dateCreated datePublished" datetime="2026-10-21T22:02:00+08:00">2026-10-21</time>
+              <time title="Created: 2026-10-21 22:02:00" itemprop="dateCreated datePublished" datetime="2026-10-21T22:02:00+08:00">2026-10-21</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2026-10-28 22:30:26" itemprop="dateModified" datetime="2026-10-28T22:30:26+08:00">2026-10-28</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -247,7 +253,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <h1 id="Agent热点追踪项目"><a href="#Agent热点追踪项目" class="headerlink" title="Agent热点追踪项目"></a>Agent热点追踪项目</h1><h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>原项目是写在公司自有平台上的，平台的MEP项目，底层类似一个后端服务给你写好的，你直接在此基础上写进程和线程就行。ai api调用也是公司内部的，glm5.2，部分mcp也是改写的，恕在此无法展示。</p>
+        <h1 id="AI热词发现agent"><a href="#AI热词发现agent" class="headerlink" title="AI热词发现agent"></a>AI热词发现agent</h1><h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>原项目是写在公司自有平台上的，平台的MEP项目，底层类似一个后端服务给你写好的，你直接在此基础上写进程和线程就行。ai api调用也是公司内部的，glm5.2，部分mcp也是改写的，恕在此无法展示。</p>
 <p>但总思路是一致的，用agent的mcp工具去抓热点新闻，再调用api去判断新闻内容，给内容打分，给热度打分，最后再从新闻标题中挑选热词，这部分全部交给api，最后记录热点新闻和热词两部分内容。</p>
 <p>这里上传github的项目是重做的，带着整个前后端的，全程由牛逼的codex生成。</p>
 <p>项目链接：<a target="_blank" rel="noopener" href="https://github.com/GongQihua/hotspot_monitor">Agent热点追踪项目</a><span id="more"></span></p>
@@ -818,7 +824,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Agent%E7%83%AD%E7%82%B9%E8%BF%BD%E8%B8%AA%E9%A1%B9%E7%9B%AE"><span class="nav-number">1.</span> <span class="nav-text">Agent热点追踪项目</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.1.</span> <span class="nav-text">前言</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%89%8D%E6%9C%9F%E5%87%86%E5%A4%87"><span class="nav-number">2.</span> <span class="nav-text">前期准备</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Vibe-coding"><span class="nav-number">2.1.</span> <span class="nav-text">Vibe-coding</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BC%98%E5%8C%961-%E5%89%8D%E7%AB%AF%E9%A1%B5%E9%9D%A2"><span class="nav-number">2.2.</span> <span class="nav-text">优化1: 前端页面</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BC%98%E5%8C%962-%E4%BF%A1%E6%81%AF%E8%8E%B7%E5%8F%96%E6%9D%A5%E6%BA%90"><span class="nav-number">2.3.</span> <span class="nav-text">优化2: 信息获取来源</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BC%98%E5%8C%963-%E4%BF%A1%E6%81%AF%E7%AD%9B%E9%80%89%E6%8E%92%E5%BA%8F"><span class="nav-number">2.4.</span> <span class="nav-text">优化3: 信息筛选排序</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BC%98%E5%8C%964-%E4%BC%98%E5%8C%96%E7%83%AD%E7%82%B9%E4%BF%A1%E6%81%AF%E5%B1%95%E7%A4%BA"><span class="nav-number">2.5.</span> <span class="nav-text">优化4: 优化热点信息展示</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BC%98%E5%8C%965-AI%E5%88%86%E6%9E%90%E5%87%86%E7%A1%AE%E5%BA%A6%E6%8F%90%E5%8D%87-%E5%85%B3%E9%94%AE%E8%AF%8D%E6%89%A9%E5%B1%95%E6%90%9C%E7%B4%A2"><span class="nav-number">2.6.</span> <span class="nav-text">优化5: AI分析准确度提升&amp;关键词扩展搜索</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#One-More-Things"><span class="nav-number">2.7.</span> <span class="nav-text">One More Things</span></a></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#AI%E7%83%AD%E8%AF%8D%E5%8F%91%E7%8E%B0agent"><span class="nav-number">1.</span> <span class="nav-text">AI热词发现agent</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.1.</span> <span class="nav-text">前言</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%89%8D%E6%9C%9F%E5%87%86%E5%A4%87"><span class="nav-number">2.</span> <span class="nav-text">前期准备</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Vibe-coding"><span class="nav-number">2.1.</span> <span class="nav-text">Vibe-coding</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BC%98%E5%8C%961-%E5%89%8D%E7%AB%AF%E9%A1%B5%E9%9D%A2"><span class="nav-number">2.2.</span> <span class="nav-text">优化1: 前端页面</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BC%98%E5%8C%962-%E4%BF%A1%E6%81%AF%E8%8E%B7%E5%8F%96%E6%9D%A5%E6%BA%90"><span class="nav-number">2.3.</span> <span class="nav-text">优化2: 信息获取来源</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BC%98%E5%8C%963-%E4%BF%A1%E6%81%AF%E7%AD%9B%E9%80%89%E6%8E%92%E5%BA%8F"><span class="nav-number">2.4.</span> <span class="nav-text">优化3: 信息筛选排序</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BC%98%E5%8C%964-%E4%BC%98%E5%8C%96%E7%83%AD%E7%82%B9%E4%BF%A1%E6%81%AF%E5%B1%95%E7%A4%BA"><span class="nav-number">2.5.</span> <span class="nav-text">优化4: 优化热点信息展示</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BC%98%E5%8C%965-AI%E5%88%86%E6%9E%90%E5%87%86%E7%A1%AE%E5%BA%A6%E6%8F%90%E5%8D%87-%E5%85%B3%E9%94%AE%E8%AF%8D%E6%89%A9%E5%B1%95%E6%90%9C%E7%B4%A2"><span class="nav-number">2.6.</span> <span class="nav-text">优化5: AI分析准确度提升&amp;关键词扩展搜索</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#One-More-Things"><span class="nav-number">2.7.</span> <span class="nav-text">One More Things</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
